@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
 
-const API_URL = "http://203.194.115.157:3000/todos";
+const API_URL = "https://api.myface.fun/todos";
 
 function TodoPage() {
   const [todos, setTodos] = useState([]);
