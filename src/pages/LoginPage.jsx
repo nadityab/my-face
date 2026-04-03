@@ -9,7 +9,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const API_URL = "http://localhost:3000";
+  const API_URL = "http://203.194.115.157:3000";
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
 
-const API_URL = "http://localhost:3000/todos";
+const API_URL = "http://203.194.115.157:3000/todos";
 
 function TodoPage() {
   const [todos, setTodos] = useState([]);
@@ -62,7 +62,7 @@ function TodoPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!inputTask) return;
+    if (!inputTask && !selectedImage) return;
 
     // Gunakan FormData untuk mengirim file + teks
     const formData = new FormData();
