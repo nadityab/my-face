@@ -14,6 +14,7 @@ function TodoPage() {
   const [selectedTodo, setSelectedTodo] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [editImage, setEditImage] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -50,13 +51,23 @@ function TodoPage() {
 
   const fetchAllTodos = async () => {
     try {
-      // TAMBAHKAN authHeader di sini
-      const res = await axios.get(`${API_URL}/public`);
+      const token = localStorage.getItem("token"); // 1. Ambil token dari storage
+
+      const res = await axios.get(`${API_URL}/public`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 2. Masukkan ke header
+        },
+      });
+
       setTodos(res.data);
     } catch (err) {
       console.error("Gagal ambil data", err);
-      // Jika token tidak valid/expired, balik ke login
-      if (err.response?.status === 401) navigate("/login");
+
+      // 3. Jika error 401 (Unauthorized/Token Expired), hapus token & ke login
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
@@ -153,10 +164,12 @@ function TodoPage() {
     }
   };
 
-  // Tambahkan fungsi Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    localStorage.removeItem("user"); // Bersihkan juga data user jika ada
+
+    // Paksa pindah halaman dan refresh
+    window.location.href = "/login";
   };
 
   return (
@@ -164,7 +177,7 @@ function TodoPage() {
       <div className="max-w-xl mx-auto px-4">
         {/* --- HEADER UTAMA --- */}
         <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-800">RakevBook Feed</h2>
+          <h2 className="text-2xl font-bold text-gray-800">MyFace is Fun</h2>
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
@@ -271,16 +284,30 @@ function TodoPage() {
                         {todo.userId?.username || "Anonymous"}
                       </strong>
                       <span className="text-xs text-gray-500 flex items-center gap-1">
-                        {new Date(todo.createdAt).toLocaleDateString()} • 🌍
-                        Public
+                        {new Date(todo.createdAt).toLocaleString("id-ID", {
+                          day: "numeric",
+                          month: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        • 🌍 Public
                       </span>
                     </div>
                   </div>
 
                   {/* --- TOMBOL AKSI (Hanya muncul jika isMyPost === true) --- */}
                   {isMyPost && (
-                    <div className="relative group">
-                      <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Agar tidak memicu event klik di elemen pembungkus
+                          setOpenMenuId(
+                            openMenuId === todo._id ? null : todo._id
+                          );
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors active:bg-gray-200"
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-5 w-5 text-gray-500"
@@ -297,20 +324,37 @@ function TodoPage() {
                         </svg>
                       </button>
 
-                      <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                        <button
-                          onClick={() => startEdit(todo)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-2"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(todo._id)}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
+                      {/* Menu Dropdown - Muncul berdasarkan state openMenuId */}
+                      {openMenuId === todo._id && (
+                        <>
+                          {/* Overlay transparan untuk menutup menu saat klik di luar area menu */}
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setOpenMenuId(null)}
+                          ></div>
+
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl z-20 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <button
+                              onClick={() => {
+                                startEdit(todo);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-2"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDelete(todo._id);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -355,7 +399,7 @@ function TodoPage() {
                       {todo.image && (
                         <div className="mt-3 rounded-lg overflow-hidden border border-gray-100">
                           <img
-                            src={`http://localhost:3000${todo.image}`}
+                            src={`http://api.myface.fun${todo.image}`}
                             alt="post-content"
                             className="w-full h-auto object-cover max-h-112.5 hover:opacity-95 transition-opacity cursor-pointer"
                             onError={(e) => {

@@ -3,16 +3,31 @@ import LoginPage from "./pages/LoginPage";
 import TodoPage from "./pages/TodoPage";
 
 function App() {
+  // Ambil token dari localStorage
+  const token = localStorage.getItem("token");
+
   return (
     <Routes>
-      {/* Halaman utama otomatis ke Login */}
-      <Route path="/" element={<Navigate to="/login" />} />
+      {/* 1. Halaman utama: Jika ada token langsung ke home, jika tidak ke login */}
+      <Route
+        path="/"
+        element={token ? <Navigate to="/home" /> : <Navigate to="/login" />}
+      />
 
-      {/* Rute Login */}
-      <Route path="/login" element={<LoginPage />} />
+      {/* 2. Rute Login: Jika user sudah login, jangan bolehkan buka halaman login lagi */}
+      <Route
+        path="/login"
+        element={token ? <Navigate to="/home" /> : <LoginPage />}
+      />
 
-      {/* Rute To-Do List */}
-      <Route path="/home" element={<TodoPage />} />
+      {/* 3. Rute To-Do List (PROTECTED): Jika tidak ada token, tendang ke login */}
+      <Route
+        path="/home"
+        element={token ? <TodoPage /> : <Navigate to="/login" />}
+      />
+
+      {/* 4. Catch-all: Jika user ngetik asal, arahkan ke login atau home */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

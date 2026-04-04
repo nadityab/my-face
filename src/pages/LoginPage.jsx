@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -11,11 +11,18 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const API_URL = "https://api.myface.fun";
 
+  // --- FITUR AUTO-LOGIN ---
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/home");
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Menentukan endpoint berdasarkan mode (Login atau Register)
     const endpoint = isRegister ? "/auth/register" : "/auth/login";
 
     try {
@@ -25,35 +32,43 @@ const LoginPage = () => {
       });
 
       if (!isRegister) {
-        // Jika Berhasil LOGIN: Simpan token
         localStorage.setItem("token", res.data.token);
-        alert("Login Berhasil!");
-        navigate("/home"); // Pindah ke halaman To-Do List
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+        navigate("/home");
+        window.location.reload();
       } else {
-        // Jika Berhasil REGISTER
         alert("Register Berhasil! Silakan Login.");
-        setIsRegister(false); // Pindah ke form login
+        setIsRegister(false);
         setUsername("");
         setPassword("");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Terjadi kesalahan pada server");
+      setError(err.response?.data?.message || "Terjadi kesalahan saat masuk");
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={{ marginBottom: "20px" }}>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 font-sans px-4">
+      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
           {isRegister ? "Buat Akun Baru" : "Selamat Datang"}
         </h2>
+        <p className="text-sm text-gray-500 mb-8">
+          {isRegister
+            ? "Daftar untuk mulai berbagi"
+            : "Silakan masuk ke akun Anda"}
+        </p>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label>Username</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="text-left flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Username
+            </label>
             <input
               type="text"
-              style={styles.input}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-sm"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Masukkan username"
@@ -61,11 +76,13 @@ const LoginPage = () => {
             />
           </div>
 
-          <div style={styles.inputGroup}>
-            <label>Password</label>
+          <div className="text-left flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Password
+            </label>
             <input
               type="password"
-              style={styles.input}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Masukkan password"
@@ -73,91 +90,37 @@ const LoginPage = () => {
             />
           </div>
 
-          {error && <p style={styles.errorText}>{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+              <p className="text-xs text-red-600 font-medium">⚠️ {error}</p>
+            </div>
+          )}
 
-          <button type="submit" style={styles.button}>
-            {isRegister ? "Daftar" : "Masuk"}
+          <button
+            type="submit"
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95 mt-2"
+          >
+            {isRegister ? "Daftar Sekarang" : "Masuk"}
           </button>
         </form>
 
-        <p style={styles.footerText}>
+        <p className="mt-8 text-sm text-gray-600">
           {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
-          <span
-            style={styles.link}
+          <button
             onClick={() => {
               setIsRegister(!isRegister);
               setError("");
+              setUsername("");
+              setPassword("");
             }}
+            className="text-blue-600 font-bold hover:underline focus:outline-none"
           >
             {isRegister ? "Login di sini" : "Daftar di sini"}
-          </span>
+          </button>
         </p>
       </div>
     </div>
   );
-};
-
-// Styling Sederhana
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    backgroundColor: "#f4f7f6",
-  },
-  card: {
-    width: "350px",
-    padding: "40px",
-    borderRadius: "12px",
-    backgroundColor: "#fff",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-    textAlign: "center",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-  },
-  inputGroup: {
-    textAlign: "left",
-    display: "flex",
-    flexDirection: "column",
-    gap: "5px",
-  },
-  input: {
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ddd",
-    fontSize: "14px",
-  },
-  button: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "none",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    fontSize: "16px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  errorText: {
-    color: "red",
-    fontSize: "13px",
-    margin: "0",
-  },
-  footerText: {
-    marginTop: "20px",
-    fontSize: "14px",
-    color: "#666",
-  },
-  link: {
-    color: "#007bff",
-    cursor: "pointer",
-    fontWeight: "bold",
-    textDecoration: "underline",
-  },
 };
 
 export default LoginPage;
