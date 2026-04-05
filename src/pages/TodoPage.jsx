@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
+// Jika nama filenya newsupdates.js (u kecil), maka importnya:
+import { NEWS_UPDATES } from "../constants/news-updates";
 
 const API_URL = "https://api.myface.fun/todos";
 
@@ -15,6 +17,8 @@ function TodoPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [editImage, setEditImage] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showNews, setShowNews] = useState(false);
 
   const navigate = useNavigate();
 
@@ -175,44 +179,174 @@ function TodoPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-10 font-sans">
       <div className="max-w-xl mx-auto px-4">
-        {/* --- HEADER UTAMA --- */}
-        <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-800">MyFace is Fun</h2>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-          >
-            Logout
-          </button>
+        {/* --- TOMBOL PEMBUKA (Floating Button di pojok kiri bawah atau atas) --- */}
+        {/* --- FLOATING BUTTON WHAT'S NEW --- */}
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          className="fixed bottom-6 left-6 z-40 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-blue-100 text-blue-600 px-5 py-3 rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all group"
+        >
+          <span className="text-lg group-hover:rotate-12 transition-transform">
+            ✨
+          </span>
+          <span className="font-bold text-sm tracking-wide">What's New</span>
+          {/* Indikator Dot Notifikasi (Opsional) */}
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+          </span>
+        </button>
+
+        {/* --- OVERLAY (OPTIMIZED) --- */}
+        {isDrawerOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 z-50 transition-opacity duration-300 animate-in fade-in"
+            onClick={() => {
+              setIsDrawerOpen(false);
+              setShowNews(false);
+            }}
+          ></div>
+        )}
+
+        {/* --- DRAWER PANEL --- */}
+        <div
+          className={`fixed top-0 left-0 w-80 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col h-dvh ${
+            isDrawerOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="p-5 flex flex-col h-full">
+            {/* Header Drawer */}
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                {showNews ? "🚀 What's New" : "Menu Utama"}
+              </h2>
+              <button
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  setShowNews(false); // Reset ke menu utama saat tutup
+                }}
+                className="text-gray-500 hover:text-red-500 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* KONTEN DINAMIS */}
+            {!showNews ? (
+              /* --- TAMPILAN AWAL: LIST MENU --- */
+              <div className="flex-1 px-4">
+                <button
+                  onClick={() => setShowNews(true)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-blue-50 rounded-xl transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                      ✨
+                    </span>
+                    <span className="font-semibold text-gray-700">
+                      What's New
+                    </span>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              /* --- TAMPILAN KEDUA: KONTEN WHAT'S NEW (OPTIMIZED) --- */
+              /* min-h-0 di sini adalah kunci agar area scroll di dalamnya terdeteksi oleh browser mobile */
+              <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-300">
+                {/* Tombol Back - Menggunakan px-6 agar sejajar dengan isi timeline */}
+                <div className="px-6 py-2">
+                  <button
+                    onClick={() => setShowNews(false)}
+                    className="text-blue-600 text-sm font-bold flex items-center gap-1 hover:text-blue-800 transition-colors py-2"
+                  >
+                    ← Kembali ke Menu
+                  </button>
+                </div>
+
+                {/* Area Scrollable */}
+                <div className="flex-1 overflow-y-auto pr-2 pl-6 space-y-6 will-change-transform touch-pan-y overscroll-contain custom-scrollbar">
+                  {NEWS_UPDATES.map((update) => (
+                    <section
+                      key={update.version}
+                      className="relative pl-8 border-l-2 border-gray-100 last:border-l-transparent pb-4"
+                    >
+                      {/* Titik Timeline - Sekarang menggunakan -left-[9px] agar bulat sempurna di tengah garis */}
+                      <span
+                        className={`absolute -left-2.25 top-1 h-4 w-4 rounded-full border-4 border-white shadow-sm ${
+                          update.version === NEWS_UPDATES[0].version
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                        }`}
+                      ></span>
+
+                      {/* Label Versi & Tanggal */}
+                      <div className="mb-1">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                            update.color === "blue"
+                              ? "bg-blue-50 text-blue-600"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {update.version} • {update.date}
+                        </span>
+                      </div>
+
+                      {/* Judul & List */}
+                      <h3 className="font-bold text-gray-800 text-sm">
+                        {update.title}
+                      </h3>
+                      <ul className="text-xs text-gray-500 list-disc ml-4 mt-2 space-y-2">
+                        {update.points.map((point, pIdx) => (
+                          <li key={pIdx} className="leading-relaxed">
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+
+                  {/* Spacer bawah: Sangat penting untuk iPhone 14 Pro Max agar tidak tertutup Home Indicator */}
+                  <div className="h-24" />
+                </div>
+              </div>
+            )}
+
+            {/* Footer Drawer */}
+            <div className="mt-auto pt-4 border-t text-center text-xs text-gray-400">
+              Build with ❤️ and Fun!
+            </div>
+          </div>
         </div>
 
-        {/* --- FORM TAMBAH POST --- */}
-        <form
-          onSubmit={handleAdd}
-          className="mb-8 bg-white p-4 rounded-xl shadow-sm flex flex-col gap-3"
-        >
-          <div className="flex gap-2 items-center">
-            <input
-              type="text"
-              value={inputTask}
-              onChange={(e) => setInputTask(e.target.value)}
-              placeholder="Apa yang kamu pikirkan?"
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-            />
-
-            {/* Input File Tersembunyi */}
-            <label className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <input
-                id="imageInput"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setSelectedImage(e.target.files[0])}
-                className="hidden"
-              />
-              {/* Icon Kamera */}
+        {/* --- HEADER UTAMA (ULTRA RESPONSIVE) --- */}
+        <div className="sticky top-0 z-30 flex justify-between items-center mb-8 bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-xl shadow-sm border-b border-gray-100 mx-2 sm:mx-0 overflow-hidden">
+          {/* SISI KIRI: Hamburger + Logo 
+      Gunakan min-w-0 dan flex-1 agar area ini bisa mengecil secara dinamis
+  */}
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
+            {/* Tombol Hamburger: flex-shrink-0 wajib agar tidak gepeng */}
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+              aria-label="Open Menu"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-gray-500"
+                className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-blue-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -221,24 +355,116 @@ function TodoPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
-            </label>
+            </button>
 
+            {/* Logo: 
+        1. min-w-0: Penting agar elemen h2 bisa mengecil di bawah ukuran aslinya.
+        2. truncate: Memotong teks dengan (...) jika menabrak tombol Logout.
+    */}
+            <h2 className="text-sm xs:text-base md:text-2xl font-bold text-gray-800 tracking-tight truncate min-w-0 select-none">
+              MyFace <span className="text-blue-600">is Fun</span>
+            </h2>
+          </div>
+
+          {/* SISI KANAN: Tombol Logout 
+      flex-shrink-0: Menjamin tombol ini tetap pada ukurannya dan tidak tergeser keluar.
+  */}
+          <div className="shrink-0 ml-2">
             <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95 text-sm"
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg text-[10px] xs:text-xs md:text-sm font-semibold transition-all active:scale-95 shadow-sm whitespace-nowrap"
             >
-              Post
+              Logout
             </button>
           </div>
+        </div>
+
+        {/* --- FORM TAMBAH POST (FIXED RESPONSIVE) --- */}
+        <form
+          onSubmit={handleAdd}
+          className="mb-8 bg-white p-3 sm:p-4 rounded-xl shadow-sm flex flex-col gap-3 mx-2 sm:mx-0 overflow-hidden"
+        >
+          <div className="flex gap-2 items-center w-full min-w-0">
+            {/* Input Teks: 
+        - basis-0: Memaksa input untuk tidak punya lebar default.
+        - flex-grow: Mengambil sisa ruang yang ada.
+        - min-w-0: Kunci agar input bisa mengecil sampai sangat kecil tanpa mendorong tombol.
+    */}
+            <div className="grow shrink min-w-0 basis-0">
+              <input
+                type="text"
+                value={inputTask}
+                onChange={(e) => setInputTask(e.target.value)}
+                placeholder="Apa yang kamu pikirkan?"
+                className="w-full bg-gray-50 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm truncate"
+              />
+            </div>
+
+            {/* Sisi Kanan: Icon Kamera & Tombol Post (Dibungkus agar tidak terpisah) */}
+            <div className="shrink-0 flex items-center gap-1 sm:gap-2">
+              {/* Tombol Kamera */}
+              <label className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
+                <input
+                  id="imageInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setSelectedImage(e.target.files[0])}
+                  className="hidden"
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </label>
+
+              {/* Tombol Post: 
+          - whitespace-nowrap: Agar tulisan "Post" tidak patah jadi 2 baris.
+          - flex-shrink-0: Menjamin tombol tidak akan terpotong atau mengecil.
+      */}
+              <button
+                type="submit"
+                className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95 text-xs sm:text-sm whitespace-nowrap"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Gambar (Jika ada gambar terpilih) */}
+          {selectedImage && (
+            <div className="relative inline-block w-20 h-20 mt-2 ml-2">
+              <img
+                src={URL.createObjectURL(selectedImage)}
+                className="w-full h-full object-cover rounded-lg border"
+                alt="preview"
+              />
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-md"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Preview Nama File Jika Ada Gambar Terpilih */}
           {selectedImage && (
