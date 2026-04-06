@@ -1,6 +1,18 @@
-// src/constants/newsUpdates.js
+// src/constants/news-updates.js (Pastikan case-sensitive folder/file sesuai import di TodoPage)
 
 export const NEWS_UPDATES = [
+  {
+    version: "v1.4.0",
+    date: "6 April 2026",
+    title: "⚡ Performance & Stability",
+    color: "indigo",
+    points: [
+      "Double-Post Prevention: Sistem proteksi tombol 'Post' untuk mencegah postingan ganda saat upload.",
+      "Silent Refresh Token: Sesi login kini lebih cerdas dengan pembaruan token otomatis di latar belakang.",
+      "Upload Loading State: Feedback visual (spinner) saat media sedang dalam proses pengiriman.",
+      "General Bug Fixes: Optimalisasi koneksi API dan perbaikan minor pada UI Drawer.",
+    ],
+  },
   {
     version: "v1.3.0",
     date: "4 April 2026",

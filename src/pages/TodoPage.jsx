@@ -18,6 +18,7 @@ function TodoPage() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showNews, setShowNews] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -61,6 +62,9 @@ function TodoPage() {
     e.preventDefault();
     if (!inputTask && !selectedImage) return;
 
+    // 1. SET LOADING MENJADI TRUE
+    setIsLoading(true);
+
     const formData = new FormData();
     formData.append("task", inputTask);
     if (selectedImage) formData.append("image", selectedImage);
@@ -79,25 +83,21 @@ function TodoPage() {
     } catch (err) {
       console.error("Gagal tambah postingan", err);
 
-      // --- LOGIKA PESAN ERROR DINAMIS ---
-      // 1. Cek jika Refresh Token juga gagal (Auto Logout terjadi di api.js)
       if (err.response?.status === 401 || err.response?.status === 403) {
         alert("Sesi habis atau token kadaluarsa, silakan login kembali.");
-        // Biasanya api.js sudah melakukan window.location.href,
-        // tapi alert ini membantu user tahu alasannya.
-      }
-      // 2. Cek jika file terlalu besar (Multer limit)
-      else if (err.response?.status === 400) {
+      } else if (err.response?.status === 400) {
         alert(
           "Gagal memposting: " +
             (err.response?.data?.message ||
               "Format file salah atau terlalu besar.")
         );
-      }
-      // 3. Error umum lainnya
-      else {
+      } else {
         alert("Gagal memposting, coba lagi nanti.");
       }
+    } finally {
+      // 2. SET LOADING MENJADI FALSE DI FINALLY
+      // Blok finally akan selalu dieksekusi, entah try sukses atau catch error
+      setIsLoading(false);
     }
   };
 
@@ -419,14 +419,47 @@ function TodoPage() {
               </label>
 
               {/* Tombol Post: 
-          - whitespace-nowrap: Agar tulisan "Post" tidak patah jadi 2 baris.
-          - flex-shrink-0: Menjamin tombol tidak akan terpotong atau mengecil.
-      */}
+    - disabled: Mencegah klik ganda saat sedang upload (isLoading === true)
+    - opacity & cursor: Memberikan feedback visual bahwa tombol sedang tidak aktif
+*/}
               <button
                 type="submit"
-                className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-full font-bold transition-all shadow-md active:scale-95 text-xs sm:text-sm whitespace-nowrap"
+                disabled={isLoading}
+                className={`shrink-0 text-white px-4 sm:px-6 py-2 rounded-full font-bold transition-all shadow-md text-xs sm:text-sm whitespace-nowrap 
+    ${
+      isLoading
+        ? "bg-blue-400 cursor-not-allowed opacity-70"
+        : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+    }`}
               >
-                Post
+                {/* Tampilkan teks yang berbeda saat loading */}
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="animate-spin h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Memposting...
+                  </div>
+                ) : (
+                  "Post"
+                )}
               </button>
             </div>
           </div>
