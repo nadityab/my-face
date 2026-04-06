@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api";
 import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
@@ -9,13 +9,14 @@ const LoginPage = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const API_URL = "https://api.myface.fun";
 
   // --- FITUR AUTO-LOGIN ---
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/home");
+    // Hanya pindah jika URL saat ini memang di /login
+    // agar tidak terjadi tabrakan navigasi
+    if (token && window.location.pathname === "/") {
+      navigate("/home", { replace: true });
     }
   }, [navigate]);
 
@@ -23,29 +24,29 @@ const LoginPage = () => {
     e.preventDefault();
     setError("");
 
-    const endpoint = isRegister ? "/auth/register" : "/auth/login";
-
     try {
-      const res = await axios.post(`${API_URL}${endpoint}`, {
-        username,
-        password,
-      });
+      const res = await api.post(
+        isRegister ? "/auth/register" : "/auth/login",
+        {
+          username,
+          password,
+        }
+      );
 
       if (!isRegister) {
+        // 1. Simpan token DULU
         localStorage.setItem("token", res.data.token);
-        if (res.data.user) {
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-        }
-        navigate("/home");
-        window.location.reload();
+        localStorage.setItem("refreshToken", res.data.refreshToken);
+
+        // 2. Gunakan window.location.href sebagai "Emergency Break"
+        // untuk memutus rantai infinite loop React Router
+        window.location.href = "/home";
       } else {
-        alert("Register Berhasil! Silakan Login.");
+        alert("Register Berhasil!");
         setIsRegister(false);
-        setUsername("");
-        setPassword("");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Terjadi kesalahan saat masuk");
+      setError(err.response?.data?.message || "Gagal masuk");
     }
   };
 
@@ -107,6 +108,7 @@ const LoginPage = () => {
         <p className="mt-8 text-sm text-gray-600">
           {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
           <button
+            type="button" // Pastikan type="button" agar tidak men-trigger submit form
             onClick={() => {
               setIsRegister(!isRegister);
               setError("");

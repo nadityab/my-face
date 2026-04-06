@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
 // Jika nama filenya newsupdates.js (u kecil), maka importnya:
 import { NEWS_UPDATES } from "../constants/news-updates";
-
-const API_URL = "https://api.myface.fun/todos";
+// ✅ Pastikan importnya mengarah ke file api.js yang kita buat tadi
+import api, { API_URL } from "../api";
 
 function TodoPage() {
   const [todos, setTodos] = useState([]);
@@ -28,50 +27,33 @@ function TodoPage() {
   const currentUserId = decoded.id; // Sesuaikan dengan key ID di tokenmu
 
   // 2. Buat fungsi helper untuk Header agar kode lebih bersih
-  const authHeader = {
-    headers: { Authorization: `Bearer ${token}` },
-  };
-
   useEffect(() => {
-    // 3. Proteksi: Jika tidak ada token, tendang ke login
+    const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
     } else {
-      fetchAllTodos();
+      fetchAllTodos(); // atau fetchPrivateTodos() tergantung kebutuhanmu
     }
   }, []);
 
   const fetchPrivateTodos = async () => {
     try {
-      // TAMBAHKAN authHeader di sini
-      const res = await axios.get(API_URL, authHeader);
+      // ✅ Ganti axios dengan api, dan hapus authHeader
+      const res = await api.get("/todos");
       setTodos(res.data);
     } catch (err) {
       console.error("Gagal ambil data", err);
-      // Jika token tidak valid/expired, balik ke login
-      if (err.response?.status === 401) navigate("/login");
+      // Gak perlu lagi if (401) navigate login di sini, karena api.js sudah otomatis urus refresh token!
     }
   };
 
   const fetchAllTodos = async () => {
     try {
-      const token = localStorage.getItem("token"); // 1. Ambil token dari storage
-
-      const res = await axios.get(`${API_URL}/public`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // 2. Masukkan ke header
-        },
-      });
-
+      // ✅ Ganti axios dengan api
+      const res = await api.get("/todos/public");
       setTodos(res.data);
     } catch (err) {
-      console.error("Gagal ambil data", err);
-
-      // 3. Jika error 401 (Unauthorized/Token Expired), hapus token & ke login
-      if (err.response?.status === 401) {
-        localStorage.removeItem("token");
-        navigate("/login");
-      }
+      console.error("Gagal ambil data public", err);
     }
   };
 
@@ -79,46 +61,52 @@ function TodoPage() {
     e.preventDefault();
     if (!inputTask && !selectedImage) return;
 
-    // Gunakan FormData untuk mengirim file + teks
     const formData = new FormData();
     formData.append("task", inputTask);
-
-    if (selectedImage) {
-      formData.append("image", selectedImage); // "image" harus sama dengan di backend
-    }
+    if (selectedImage) formData.append("image", selectedImage);
 
     try {
-      // Kirim formData, bukan objek JSON
-      await axios.post(API_URL, formData, {
+      await api.post("/todos", formData, {
         headers: {
-          ...authHeader.headers,
-          "Content-Type": "multipart/form-data", // Wajib untuk kirim file
+          "Content-Type": "multipart/form-data",
         },
       });
 
       setInputTask("");
-      setSelectedImage(null); // Reset input gambar
-      document.getElementById("imageInput").value = ""; // Reset input file fisik
-      fetchAllTodos(); // Refresh data feed
+      setSelectedImage(null);
+      document.getElementById("imageInput").value = "";
+      fetchAllTodos();
     } catch (err) {
-      console.error(
-        "Gagal tambah postingan",
-        err.response?.data || err.message
-      );
-      alert("Gagal memposting, pastikan file adalah gambar.");
+      console.error("Gagal tambah postingan", err);
+
+      // --- LOGIKA PESAN ERROR DINAMIS ---
+      // 1. Cek jika Refresh Token juga gagal (Auto Logout terjadi di api.js)
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Sesi habis atau token kadaluarsa, silakan login kembali.");
+        // Biasanya api.js sudah melakukan window.location.href,
+        // tapi alert ini membantu user tahu alasannya.
+      }
+      // 2. Cek jika file terlalu besar (Multer limit)
+      else if (err.response?.status === 400) {
+        alert(
+          "Gagal memposting: " +
+            (err.response?.data?.message ||
+              "Format file salah atau terlalu besar.")
+        );
+      }
+      // 3. Error umum lainnya
+      else {
+        alert("Gagal memposting, coba lagi nanti.");
+      }
     }
   };
 
   const handleToggle = async (todo) => {
     try {
-      // TAMBAHKAN authHeader
-      await axios.put(
-        `${API_URL}/${todo._id}`,
-        {
-          completed: !todo.completed,
-        },
-        authHeader
-      );
+      // ✅ Ganti axios dengan api
+      await api.put(`/todos/${todo._id}`, {
+        completed: !todo.completed,
+      });
       fetchAllTodos();
     } catch (err) {
       console.error("Gagal toggle status", err);
@@ -134,34 +122,28 @@ function TodoPage() {
   const handleUpdateText = async (id) => {
     const formData = new FormData();
     formData.append("task", editText);
-
-    // Jika ada gambar baru yang dipilih, masukkan ke formData
-    if (editImage) {
-      formData.append("image", editImage);
-    }
+    if (editImage) formData.append("image", editImage);
 
     try {
-      const res = await axios.put(`${API_URL}/${id}`, formData, {
+      // ✅ Ganti axios dengan api
+      const res = await api.put(`/todos/${id}`, formData, {
         headers: {
-          ...authHeader.headers,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      // Update state local
       setTodos(todos.map((t) => (t._id === id ? res.data : t)));
       setIsModalOpen(false);
-      setEditImage(null); // Reset state gambar setelah sukses
+      setEditImage(null);
     } catch (err) {
       console.error("Gagal update postingan", err);
-      alert("Gagal mengedit postingan.");
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      // TAMBAHKAN authHeader
-      await axios.delete(`${API_URL}/${id}`, authHeader);
+      // ✅ Ganti axios dengan api
+      await api.delete(`/todos/${id}`);
       fetchAllTodos();
     } catch (err) {
       console.error("Gagal hapus task", err);
@@ -625,7 +607,7 @@ function TodoPage() {
                       {todo.image && (
                         <div className="mt-3 rounded-lg overflow-hidden border border-gray-100">
                           <img
-                            src={`http://api.myface.fun${todo.image}`}
+                            src={`${API_URL}${todo.image}`}
                             alt="post-content"
                             className="w-full h-auto object-cover max-h-112.5 hover:opacity-95 transition-opacity cursor-pointer"
                             onError={(e) => {
