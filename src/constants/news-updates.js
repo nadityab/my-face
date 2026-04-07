@@ -2,6 +2,19 @@
 
 export const NEWS_UPDATES = [
   {
+    version: "v1.5.0",
+    date: "7 April 2026",
+    title: "💬 Social Interaction Engine",
+    color: "pink",
+    points: [
+      "Facebook-Style Comments: Sistem komentar dengan tampilan bubble modern yang interaktif.",
+      "Smart Comment Slicing: Secara otomatis menampilkan 3 komentar terbaru untuk menjaga kebersihan feed.",
+      "Instant Engagement: Kolom input komentar yang selalu terbuka untuk interaksi lebih cepat.",
+      "Comment Management: Fitur hapus komentar pribadi dengan verifikasi kepemilikan.",
+      "Full API Integration: Sinkronisasi real-time antara database komentar dan tampilan UI.",
+    ],
+  },
+  {
     version: "v1.4.0",
     date: "6 April 2026",
     title: "⚡ Performance & Stability",

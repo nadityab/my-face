@@ -20,6 +20,13 @@ function TodoPage() {
   const [showNews, setShowNews] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // State untuk menyimpan komentar berdasarkan ID postingan { todoId: [comments] }
+  const [comments, setComments] = useState({});
+  // State untuk melacak postingan mana yang sedang dibuka kolom komentarnya
+  const [activeCommentBox, setActiveCommentBox] = useState(null);
+  // State untuk teks input komentar per postingan { todoId: "teks" }
+  const [commentInputs, setCommentInputs] = useState({});
+
   const navigate = useNavigate();
 
   // 1. Ambil token dari localStorage
@@ -36,6 +43,15 @@ function TodoPage() {
       fetchAllTodos(); // atau fetchPrivateTodos() tergantung kebutuhanmu
     }
   }, []);
+
+  // Tambahkan fungsi untuk ambil semua komentar sekaligus setelah todos ter-load
+  useEffect(() => {
+    if (todos.length > 0) {
+      todos.forEach((todo) => {
+        fetchComments(todo._id);
+      });
+    }
+  }, [todos]); // Berjalan setiap kali list 'todos' berubah
 
   const fetchPrivateTodos = async () => {
     try {
@@ -156,6 +172,49 @@ function TodoPage() {
 
     // Paksa pindah halaman dan refresh
     window.location.href = "/login";
+  };
+
+  // Ambil komentar dari server
+  const fetchComments = async (todoId) => {
+    try {
+      const res = await api.get(`/comments/${todoId}`);
+      setComments((prev) => ({ ...prev, [todoId]: res.data }));
+    } catch (err) {
+      console.error("Gagal ambil komentar", err);
+    }
+  };
+
+  // Kirim komentar baru
+  const handleAddComment = async (todoId) => {
+    const text = commentInputs[todoId];
+    if (!text || !text.trim()) return;
+
+    try {
+      const res = await api.post(`/comments/${todoId}`, { content: text });
+      // Update state comments lokal agar langsung muncul
+      setComments((prev) => ({
+        ...prev,
+        [todoId]: [...(prev[todoId] || []), res.data],
+      }));
+      // Reset input field
+      setCommentInputs((prev) => ({ ...prev, [todoId]: "" }));
+    } catch (err) {
+      alert("Gagal mengirim komentar");
+    }
+  };
+
+  // Hapus komentar
+  const handleDeleteComment = async (commentId, todoId) => {
+    if (!window.confirm("Hapus komentar ini?")) return;
+    try {
+      await api.delete(`/comments/${commentId}`);
+      setComments((prev) => ({
+        ...prev,
+        [todoId]: prev[todoId].filter((c) => c._id !== commentId),
+      }));
+    } catch (err) {
+      alert("Gagal hapus komentar");
+    }
   };
 
   return (
@@ -651,6 +710,157 @@ function TodoPage() {
                       )}
                     </>
                   )}
+
+                  {/* --- AREA AKSI (Like/Comment Buttons) --- */}
+                  <div className="px-4 py-2 border-t border-gray-50 flex gap-6">
+                    <button className="flex items-center gap-1.5 text-gray-500 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors text-sm font-semibold">
+                      👍 Suka
+                    </button>
+                    <button
+                      onClick={() =>
+                        document
+                          .getElementById(`input-comment-${todo._id}`)
+                          .focus()
+                      }
+                      className="flex items-center gap-1.5 text-gray-500 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors text-sm font-semibold"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      <span>{comments[todo._id]?.length || 0} Komentar</span>
+                    </button>
+                  </div>
+
+                  {/* --- AREA KOMENTAR GAYA FACEBOOK --- */}
+                  <div className="px-4 pb-4 border-t border-gray-50 bg-white">
+                    {/* Tombol "Lihat komentar sebelumnya" (Hanya muncul jika komentar > 1) */}
+                    {comments[todo._id]?.length > 1 && (
+                      <button
+                        onClick={() =>
+                          setActiveCommentBox(
+                            activeCommentBox === todo._id ? null : todo._id
+                          )
+                        }
+                        className="text-sm text-gray-500 font-semibold hover:underline py-2 block"
+                      >
+                        {activeCommentBox === todo._id
+                          ? "Sembunyikan komentar"
+                          : `Lihat ${
+                              comments[todo._id].length - 1
+                            } komentar lainnya`}
+                      </button>
+                    )}
+
+                    {/* List Komentar */}
+                    <div className="mt-2 space-y-3">
+                      {/* Logika: Jika tidak di-expand, hanya tampilkan 1 komentar terbaru. 
+        Jika di-expand, tampilkan semua. */}
+                      {(activeCommentBox === todo._id
+                        ? comments[todo._id]
+                        : comments[todo._id]?.slice(-1)
+                      )?.map((comment) => (
+                        <div key={comment._id} className="flex gap-2 group">
+                          {/* Avatar Kecil */}
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 border border-gray-100">
+                            {comment.userId?.username?.charAt(0).toUpperCase()}
+                          </div>
+
+                          {/* Bubble Komentar */}
+                          <div className="flex-1 bg-gray-100 px-3 py-2 rounded-2xl relative">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[12px] font-bold text-gray-900 leading-none">
+                                {comment.userId?.username}
+                              </span>
+                              {comment.userId?._id === currentUserId && (
+                                <button
+                                  onClick={() =>
+                                    handleDeleteComment(comment._id, todo._id)
+                                  }
+                                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-all"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-3 w-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-[13px] text-gray-800 mt-1">
+                              {comment.content}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Input Komentar yang SELALU TERBUKA (Khas Facebook) */}
+                    <div className="flex gap-2 items-center mt-4">
+                      {/* Avatar User Login */}
+                      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 border border-blue-200">
+                        {decoded.username?.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div className="flex-1 flex items-center bg-gray-100 rounded-2xl px-3 py-1.5 focus-within:bg-gray-200 transition-colors">
+                        <input
+                          id={`input-comment-${todo._id}`}
+                          type="text"
+                          placeholder="Tulis komentar..."
+                          value={commentInputs[todo._id] || ""}
+                          onChange={(e) =>
+                            setCommentInputs({
+                              ...commentInputs,
+                              [todo._id]: e.target.value,
+                            })
+                          }
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleAddComment(todo._id)
+                          }
+                          className="flex-1 bg-transparent border-none outline-none text-sm py-1"
+                        />
+
+                        {/* Icon Kirim (Hanya tampil biru kalau ada teks) */}
+                        <button
+                          onClick={() => handleAddComment(todo._id)}
+                          disabled={!commentInputs[todo._id]?.trim()}
+                          className={`ml-2 transition-colors ${
+                            commentInputs[todo._id]?.trim()
+                              ? "text-blue-600"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
