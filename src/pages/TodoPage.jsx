@@ -34,24 +34,41 @@ function TodoPage() {
   const decoded = jwtDecode(token);
   const currentUserId = decoded.id; // Sesuaikan dengan key ID di tokenmu
 
-  // 2. Buat fungsi helper untuk Header agar kode lebih bersih
+  // 1. PINTU UTAMA: Validasi Sesi & Auto Renewal
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-    } else {
-      fetchAllTodos(); // atau fetchPrivateTodos() tergantung kebutuhanmu
-    }
-  }, []);
+    const initApp = async () => {
+      const token = localStorage.getItem("token");
 
-  // Tambahkan fungsi untuk ambil semua komentar sekaligus setelah todos ter-load
+      // Jika token kosong, langsung usir
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        // Panggil /auth/me untuk memicu Renewal di api.js (interceptor)
+        // Ini akan memperbarui token di localStorage secara otomatis
+        await api.get("/auth/me");
+
+        // Jika /me sukses, baru ambil data postingan
+        fetchAllTodos();
+      } catch (err) {
+        // Jika 401, interceptor api.js sudah mengurus logout.
+        console.error("Gagal inisialisasi sesi atau token expired");
+      }
+    };
+
+    initApp();
+  }, []); // Jalankan sekali saja saat komponen dimuat
+
+  // 2. FETCH KOMENTAR: Berjalan otomatis setiap kali 'todos' berhasil di-load
   useEffect(() => {
     if (todos.length > 0) {
       todos.forEach((todo) => {
         fetchComments(todo._id);
       });
     }
-  }, [todos]); // Berjalan setiap kali list 'todos' berubah
+  }, [todos]);
 
   const fetchPrivateTodos = async () => {
     try {
