@@ -21,6 +21,8 @@ function TodoPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { postId } = useParams();
   const hasScrolledRef = useRef(false);
+  // State untuk menyimpan file gambar komentar per-postingan
+  const [selectedCommentImages, setSelectedCommentImages] = useState({});
 
   // ✅ FIX: Tambahkan state currentUser yang tadinya belum ada
   const [currentUser, setCurrentUser] = useState(null);
@@ -228,18 +230,38 @@ function TodoPage() {
   };
 
   const handleAddComment = async (todoId) => {
+    // 1. Ambil teks dan file gambar dari state
     const text = commentInputs[todoId];
-    if (!text || !text.trim()) return;
+    const imageFile = selectedCommentImages[todoId]; // File dari state 2.1 tadi
+
+    // 2. Validasi: Jangan kirim kalau tidak ada teks DAN tidak ada gambar
+    if (!text?.trim() && !imageFile) return;
+
+    // 3. Gunakan FormData (Wajib untuk upload file)
+    const formData = new FormData();
+    formData.append("content", text || ""); // Tetap pakai 'content' sesuai model backend
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
 
     try {
-      const res = await api.post(`/comments/${todoId}`, { content: text });
+      // 4. Kirim ke API dengan header multipart/form-data
+      const res = await api.post(`/comments/${todoId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // 5. Update state komentar (Logika asli kamu tetap dipertahankan)
       setComments((prev) => ({
         ...prev,
         [todoId]: [...(prev[todoId] || []), res.data],
       }));
+
+      // 6. Reset input teks DAN reset pilihan gambar
       setCommentInputs((prev) => ({ ...prev, [todoId]: "" }));
+      setSelectedCommentImages((prev) => ({ ...prev, [todoId]: null }));
     } catch (err) {
-      alert("Gagal mengirim komentar");
+      console.error("Error detail:", err);
+      alert("Gagal mengirim komentar"); // Alert asli kamu tetap ada
     }
   };
 
@@ -329,6 +351,35 @@ function TodoPage() {
       }
     } catch (err) {
       console.log("Proses share dibatalkan atau error:", err);
+    }
+  };
+
+  const handleLikeComment = async (commentId, todoId) => {
+    if (!currentUser) return;
+
+    const userId = currentUser._id;
+
+    // 1. Update secara instan (Optimistic)
+    setComments((prev) => ({
+      ...prev,
+      [todoId]: prev[todoId].map((c) => {
+        if (c._id === commentId) {
+          const alreadyLiked = c.likes?.includes(userId);
+          const newLikes = alreadyLiked
+            ? c.likes.filter((id) => id !== userId)
+            : [...(c.likes || []), userId];
+          return { ...c, likes: newLikes };
+        }
+        return c;
+      }),
+    }));
+
+    try {
+      // 2. Tembak API (Kita buat nanti di Step 3)
+      await api.patch(`/comments/${commentId}/like`);
+    } catch (err) {
+      console.error("Gagal Like Komentar:", err);
+      // Jika error, kamu bisa fetch ulang komentar untuk sync data asli
     }
   };
 
@@ -746,7 +797,8 @@ function TodoPage() {
                 </div>
 
                 {/* --- AREA KOMENTAR --- */}
-                <div className="px-4 pb-4 bg-white">
+                <div className="px-4 pb-4 bg-white border-t border-gray-50">
+                  {/* --- TOMBOL LIHAT KOMENTAR LAINNYA --- */}
                   {comments[todo._id]?.length > 1 && (
                     <button
                       onClick={() =>
@@ -754,7 +806,7 @@ function TodoPage() {
                           activeCommentBox === todo._id ? null : todo._id
                         )
                       }
-                      className="text-sm text-gray-500 font-semibold hover:underline py-2"
+                      className="text-xs text-blue-600 font-bold hover:underline py-2"
                     >
                       {activeCommentBox === todo._id
                         ? "Sembunyikan komentar"
@@ -763,77 +815,175 @@ function TodoPage() {
                           } komentar lainnya`}
                     </button>
                   )}
-                  <div className="mt-2 space-y-3">
+
+                  <div className="mt-2 space-y-4">
                     {(activeCommentBox === todo._id
                       ? comments[todo._id]
                       : comments[todo._id]?.slice(-1)
                     )?.map((comment) => (
                       <div key={comment._id} className="flex gap-2 group">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">
+                        {/* Profil Mini */}
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-tr from-gray-200 to-gray-300 flex items-center justify-center text-[10px] font-bold shadow-sm">
                           {comment.userId?.username?.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex-1 bg-gray-100 px-3 py-2 rounded-2xl">
-                          <div className="flex justify-between">
-                            <span className="text-[12px] font-bold">
-                              {comment.userId?.username}
-                            </span>
+
+                        <div className="flex-1 flex flex-col">
+                          {/* Bubble Komentar */}
+                          <div className="bg-gray-100 px-3 py-2 rounded-2xl inline-block max-w-[95%]">
+                            <div className="flex justify-between items-center gap-4">
+                              <span className="text-[12px] font-bold text-gray-900">
+                                {comment.userId?.username}
+                              </span>
+                              {/* ✅ 1. TIMESTAMP KOMENTAR */}
+                              <span className="text-[9px] text-gray-400 font-medium">
+                                {new Date(comment.createdAt).toLocaleTimeString(
+                                  "id-ID",
+                                  { hour: "2-digit", minute: "2-digit" }
+                                )}
+                              </span>
+                            </div>
+
+                            <p className="text-[13px] mt-0.5 text-gray-800 leading-snug">
+                              {comment.content}
+                            </p>
+
+                            {/* ✅ 2. GAMBAR KOMENTAR (Jika ada) */}
+                            {comment.image && (
+                              <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 bg-white">
+                                <img
+                                  src={`${API_URL}${comment.image}`}
+                                  className="w-full max-h-48 object-cover"
+                                  alt="comment-attach"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* ✅ 3. TOMBOL AKSI (LIKE & DELETE) */}
+                          <div className="flex items-center gap-4 ml-2 mt-1">
+                            <button
+                              onClick={() =>
+                                handleLikeComment(comment._id, todo._id)
+                              }
+                              className={`text-[11px] font-bold transition-colors ${
+                                comment.likes?.includes(currentUser?._id)
+                                  ? "text-pink-500"
+                                  : "text-gray-500 hover:text-blue-600"
+                              }`}
+                            >
+                              {comment.likes?.includes(currentUser?._id)
+                                ? "Suka"
+                                : "Suka"}
+                            </button>
+
+                            {comment.likes?.length > 0 && (
+                              <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                                ❤️ {comment.likes.length}
+                              </span>
+                            )}
+
                             {comment.userId?._id === currentUser?._id && (
                               <button
                                 onClick={() =>
                                   handleDeleteComment(comment._id, todo._id)
                                 }
-                                /* ✅ opacity-0 dan group-hover dihapus agar selalu muncul */
-                                className="text-red-500 hover:text-red-700 px-1 text-xs transition-colors"
-                                title="Hapus Komentar"
+                                className="text-red-400 hover:text-red-600 text-[11px] font-medium transition-colors"
                               >
-                                ✕
+                                Hapus
                               </button>
                             )}
                           </div>
-                          <p className="text-[13px] mt-1">{comment.content}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2 items-center mt-4">
-                    <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
-                      {currentUser?.username?.charAt(0).toUpperCase() || "?"}
-                    </div>
-                    <div className="flex-1 flex items-center bg-gray-100 rounded-2xl px-3 py-1.5">
-                      <input
-                        id={`input-comment-${todo._id}`}
-                        type="text"
-                        placeholder="Tulis komentar..."
-                        value={commentInputs[todo._id] || ""}
-                        onChange={(e) =>
-                          setCommentInputs({
-                            ...commentInputs,
-                            [todo._id]: e.target.value,
-                          })
-                        }
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleAddComment(todo._id)
-                        }
-                        className="flex-1 bg-transparent border-none outline-none text-sm py-1"
-                      />
-                      <button
-                        onClick={() => handleAddComment(todo._id)}
-                        disabled={!commentInputs[todo._id]?.trim()}
-                        className={
-                          commentInputs[todo._id]?.trim()
-                            ? "text-blue-600"
-                            : "text-gray-400"
-                        }
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
+
+                  {/* --- INPUT BAR KOMENTAR --- */}
+                  <div className="mt-4 flex flex-col gap-2">
+                    {/* ✅ 4. PREVIEW GAMBAR SEBELUM DIKIRIM */}
+                    {selectedCommentImages[todo._id] && (
+                      <div className="relative w-16 h-16 ml-10 mb-1">
+                        <img
+                          src={URL.createObjectURL(
+                            selectedCommentImages[todo._id]
+                          )}
+                          className="w-full h-full object-cover rounded-lg border-2 border-blue-500 shadow-sm"
+                        />
+                        <button
+                          onClick={() =>
+                            setSelectedCommentImages({
+                              ...selectedCommentImages,
+                              [todo._id]: null,
+                            })
+                          }
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center shadow-md hover:bg-red-600"
                         >
-                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                        </svg>
-                      </button>
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 items-center">
+                      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm">
+                        {currentUser?.username?.charAt(0).toUpperCase() || "?"}
+                      </div>
+
+                      <div className="flex-1 flex items-center bg-gray-100 rounded-2xl px-3 py-1.5 shadow-inner group">
+                        {/* ✅ 5. TOMBOL PILIH GAMBAR */}
+                        <label className="mr-2 cursor-pointer hover:scale-110 transition-transform active:scale-95 grayscale hover:grayscale-0">
+                          <span className="text-lg">📷</span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) =>
+                              setSelectedCommentImages({
+                                ...selectedCommentImages,
+                                [todo._id]: e.target.files[0],
+                              })
+                            }
+                          />
+                        </label>
+
+                        <input
+                          id={`input-comment-${todo._id}`}
+                          type="text"
+                          placeholder="Tulis komentar..."
+                          value={commentInputs[todo._id] || ""}
+                          onChange={(e) =>
+                            setCommentInputs({
+                              ...commentInputs,
+                              [todo._id]: e.target.value,
+                            })
+                          }
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleAddComment(todo._id)
+                          }
+                          className="flex-1 bg-transparent border-none outline-none text-sm py-1"
+                        />
+
+                        <button
+                          onClick={() => handleAddComment(todo._id)}
+                          disabled={
+                            !commentInputs[todo._id]?.trim() &&
+                            !selectedCommentImages[todo._id]
+                          }
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 transition-colors ${
+                              commentInputs[todo._id]?.trim() ||
+                              selectedCommentImages[todo._id]
+                                ? "text-blue-600"
+                                : "text-gray-400"
+                            }`}
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
