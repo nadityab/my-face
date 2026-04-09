@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 import { NEWS_UPDATES } from "../constants/news-updates";
 // ✅ Pastikan importnya mengarah ke file api.js yang kita buat tadi
 import api, { API_URL } from "../api";
+import { Image } from "antd";
 
 function TodoPage() {
   const [todos, setTodos] = useState([]);
@@ -767,11 +768,14 @@ function TodoPage() {
                     {todo.task}
                   </p>
                   {todo.image && (
-                    <div className="mt-3 rounded-lg overflow-hidden border">
-                      <img
+                    <div className="mt-3 rounded-lg overflow-hidden border bg-gray-100 flex justify-center items-center">
+                      {/* ✅ Kita buat container-nya punya background dan fotonya di tengah */}
+                      <Image
                         src={`${API_URL}${todo.image}`}
                         alt="post"
-                        className="w-full h-auto object-cover max-h-112.5"
+                        className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
+                        // Tambahkan width="100%" agar komponen Antd tahu dia harus fleksibel
+                        width="100%"
                       />
                     </div>
                   )}
@@ -889,11 +893,12 @@ function TodoPage() {
 
                             {/* ✅ 2. GAMBAR KOMENTAR (Jika ada) */}
                             {comment.image && (
-                              <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 bg-white">
-                                <img
+                              <div className="mt-2 rounded-lg overflow-hidden border border-gray-100 max-w-50">
+                                {/* ✅ Biar foto di komentar juga bisa di-zoom si Polee */}
+                                <Image
                                   src={`${API_URL}${comment.image}`}
-                                  className="w-full max-h-48 object-cover"
-                                  alt="comment-attach"
+                                  alt="Comment attachment"
+                                  className="w-full object-cover rounded-md cursor-pointer"
                                 />
                               </div>
                             )}
@@ -943,12 +948,16 @@ function TodoPage() {
                     {/* ✅ 4. PREVIEW GAMBAR SEBELUM DIKIRIM */}
                     {selectedCommentImages[todo._id] && (
                       <div className="relative w-16 h-16 ml-10 mb-1">
-                        <img
+                        {/* ✅ Menggunakan Ant Design Image untuk preview lokal */}
+                        <Image
                           src={URL.createObjectURL(
                             selectedCommentImages[todo._id]
                           )}
-                          className="w-full h-full object-cover rounded-lg border-2 border-blue-500 shadow-sm"
+                          className="w-full h-full object-cover rounded-lg border-2 border-blue-500 shadow-sm cursor-zoom-in"
+                          alt="preview"
                         />
+
+                        {/* Tombol Hapus - Tetap original sesuai kodingan kamu */}
                         <button
                           onClick={() =>
                             setSelectedCommentImages({
@@ -956,7 +965,7 @@ function TodoPage() {
                               [todo._id]: null,
                             })
                           }
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center shadow-md hover:bg-red-600"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center shadow-md hover:bg-red-600 z-10"
                         >
                           ✕
                         </button>

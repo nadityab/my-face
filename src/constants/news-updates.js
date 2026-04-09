@@ -2,6 +2,58 @@
 
 export const NEWS_UPDATES = [
   {
+    version: "1.8.0",
+    updateTitle: "The Visual & Smart Update",
+    releaseDate: "2026-04-09",
+    features: [
+      {
+        id: 1,
+        icon: "🖼️",
+        title: "Pro Image Preview",
+        description:
+          "Zoom, rotate, dan geser foto sesukamu! Integrasi Ant Design membuat pengalaman melihat foto jadi lebih premium.",
+      },
+      {
+        id: 2,
+        icon: "🕒",
+        title: "Smart Timestamps",
+        description:
+          "Waktu yang lebih manusiawi. Sekarang label waktu otomatis berubah menjadi 'Today' atau 'Yesterday' sesuai harinya.",
+      },
+      {
+        id: 3,
+        icon: "📸",
+        title: "Photo Comments",
+        description:
+          "Komentar tidak lagi membosankan. Sekarang kamu bisa membalas postingan dengan gambar langsung di kolom komentar.",
+      },
+      {
+        id: 4,
+        icon: "🛡️",
+        title: "Anti-Double Post",
+        description:
+          "Sistem loading baru yang cerdas untuk mencegah komentar terkirim ganda saat koneksi internet sedang lambat.",
+      },
+      {
+        id: 5,
+        icon: "🧹",
+        title: "Auto-Cleanup System",
+        description:
+          "Server lebih efisien. Saat postingan atau komentar dihapus, file gambar terkait otomatis dibersihkan secara permanen.",
+      },
+      {
+        id: 6,
+        icon: "⚡",
+        title: "Optimized Feed",
+        description:
+          "Tampilan foto di feed kini lebih rapi tanpa ruang kosong yang mengganggu, memberikan kesan galeri yang estetik.",
+      },
+    ],
+    isCriticalUpdate: false,
+    developerNotes:
+      "Update ini memfokuskan pada peningkatan UX visual dan efisiensi manajemen aset di sisi server.",
+  },
+  {
     version: "1.7.0",
     updateTitle: "The Social & Clean Update",
     releaseDate: "2026-04-09",
