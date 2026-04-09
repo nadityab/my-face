@@ -148,15 +148,14 @@ function TodoPage() {
   };
 
   const handleUpdateText = async (id) => {
+    setIsLoading(true); // 1. Mulai Loading
     const formData = new FormData();
     formData.append("task", editText);
     if (editImage) formData.append("image", editImage);
 
     try {
       const res = await api.put(`/todos/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       setTodos(todos.map((t) => (t._id === id ? res.data : t)));
@@ -164,6 +163,9 @@ function TodoPage() {
       setEditImage(null);
     } catch (err) {
       console.error("Gagal update postingan", err);
+      alert("Gagal menyimpan perubahan.");
+    } finally {
+      setIsLoading(false); // 2. Matikan Loading (berhasil atau gagal tetap mati)
     }
   };
 
@@ -222,22 +224,44 @@ function TodoPage() {
   };
 
   const handleLike = async (id) => {
-    if (!currentUser) return; // Proteksi jika user belum load
+    if (!currentUser) return;
+
+    const userId = currentUser.id || currentUser._id; // Sesuaikan dengan struktur user kamu
+
+    // 1. Simpan kondisi 'todos' saat ini buat jaga-jaga kalau server error (Rollback)
+    const previousTodos = [...todos];
+
+    // 2. LANGSUNG UPDATE UI (Optimistic)
+    setTodos((prevTodos) =>
+      prevTodos.map((t) => {
+        if (t._id === id) {
+          const alreadyLiked = t.likes?.includes(userId);
+          const newLikes = alreadyLiked
+            ? t.likes.filter((uid) => uid !== userId) // Hapus jika sudah ada (Unlike)
+            : [...(t.likes || []), userId]; // Tambah jika belum ada (Like)
+
+          return { ...t, likes: newLikes };
+        }
+        return t;
+      })
+    );
 
     try {
-      // Tembak API Patch Like
+      // 3. Baru tembak API di belakang layar
       const res = await api.patch(`/todos/${id}/like`);
 
-      // Update state 'todos' secara instan
+      // 4. Opsional: Sinkronkan ulang dengan data asli server agar lebih akurat
       setTodos((prevTodos) =>
         prevTodos.map((t) =>
-          t._id === id
-            ? { ...t, likes: res.data.likes } // Timpa data likes dengan yang baru dari server
-            : t
+          t._id === id ? { ...t, likes: res.data.likes } : t
         )
       );
     } catch (err) {
-      console.error("Gagal Like di Frontend:", err);
+      console.error("Gagal Like, mengembalikan state...", err);
+
+      // 5. ROLLBACK: Jika server error (misal 500), kembalikan warna ke sebelumnya
+      setTodos(previousTodos);
+      alert("Gagal memproses Like, silakan coba lagi.");
     }
   };
 
@@ -723,7 +747,9 @@ function TodoPage() {
                                 onClick={() =>
                                   handleDeleteComment(comment._id, todo._id)
                                 }
-                                className="opacity-0 group-hover:opacity-100 text-red-600 text-xs"
+                                /* ✅ opacity-0 dan group-hover dihapus agar selalu muncul */
+                                className="text-red-500 hover:text-red-700 px-1 text-xs transition-colors"
+                                title="Hapus Komentar"
                               >
                                 ✕
                               </button>
@@ -820,19 +846,23 @@ function TodoPage() {
             </div>
             <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
               <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditImage(null);
-                }}
-                className="px-4 py-2 text-sm font-semibold text-gray-600"
-              >
-                Batal
-              </button>
-              <button
                 onClick={() => handleUpdateText(selectedTodo._id)}
-                className="px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg"
+                disabled={isLoading} // 3. Cegah klik ganda
+                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed opacity-70"
+                    : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                }`}
               >
-                Simpan Perubahan
+                {/* 4. Ubah teks saat loading */}
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Menyimpan...
+                  </div>
+                ) : (
+                  "Simpan Perubahan"
+                )}
               </button>
             </div>
           </div>

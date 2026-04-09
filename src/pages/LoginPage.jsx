@@ -75,8 +75,9 @@ const LoginPage = () => {
               type="text"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 outline-none transition-all text-sm"
               value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())} // Auto-lowercase
-              placeholder="Contoh: rakev_fun"
+              // ✅ FIX: .toLowerCase() dihapus agar "Polee" tetap "Polee"
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Contoh: Polee_Fun"
               required
             />
           </div>
