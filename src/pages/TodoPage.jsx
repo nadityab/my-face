@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Tambahkan ini
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
 // Jika nama filenya newsupdates.js (u kecil), maka importnya:
 import { NEWS_UPDATES } from "../constants/news-updates";
@@ -19,6 +19,8 @@ function TodoPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showNews, setShowNews] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { postId } = useParams();
+  const hasScrolledRef = useRef(false);
 
   // ✅ FIX: Tambahkan state currentUser yang tadinya belum ada
   const [currentUser, setCurrentUser] = useState(null);
@@ -76,6 +78,37 @@ function TodoPage() {
       });
     }
   }, [todos]);
+
+  // 3. Auto scroll ke share dengan unique id tertentu
+  useEffect(() => {
+    // ✅ Kita tambah syarat: HANYA jalan jika hasScrolledRef masih FALSE
+    if (postId && todos.length > 0 && !hasScrolledRef.current) {
+      const target = document.getElementById(postId);
+      if (target) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+          // ✅ TANDAI: Bahwa kita sudah scroll satu kali, jadi jangan ulangi lagi
+          hasScrolledRef.current = true;
+
+          // ✨ STYLING TETAP (Sesuai permintaan, tidak disunat)
+          target.classList.add("ring-4", "ring-blue-500/50", "ring-offset-2");
+          setTimeout(() => {
+            target.classList.remove(
+              "ring-4",
+              "ring-blue-500/50",
+              "ring-offset-2"
+            );
+          }, 3000);
+        }, 800);
+      }
+    }
+  }, [postId, todos]); // Dependency tetap, tapi dikontrol oleh hasScrolledRef
+
+  // Jika postId di URL berubah, kita izinkan scroll lagi untuk ID baru tersebut
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [postId]);
 
   const fetchPrivateTodos = async () => {
     try {
@@ -556,6 +589,8 @@ function TodoPage() {
             return (
               <div
                 key={todo._id}
+                id={todo._id} // ✅ Wajib ada untuk target scroll
+                style={{ scrollMarginTop: "100px" }} // ✅ Agar tidak tertutup header sticky kamu
                 className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden relative"
               >
                 {/* --- HEADER POST --- */}
