@@ -19,6 +19,7 @@ function TodoPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showNews, setShowNews] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCommentLoading, setIsCommentLoading] = useState({});
   const { postId } = useParams();
   const hasScrolledRef = useRef(false);
   // State untuk menyimpan file gambar komentar per-postingan
@@ -111,6 +112,45 @@ function TodoPage() {
   useEffect(() => {
     hasScrolledRef.current = false;
   }, [postId]);
+
+  const formatTimestamp = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Ambil waktu tengah malam hari ini & kemarin untuk perbandingan yang akurat
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+    const yesterday = today - 24 * 60 * 60 * 1000;
+
+    // Waktu dari data (di-reset ke jam 00:00 untuk perbandingan tanggal)
+    const compareDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    ).getTime();
+
+    // Format jam (contoh: 14:05)
+    const timeStr = date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (compareDate === today) {
+      return `Today, ${timeStr}`;
+    } else if (compareDate === yesterday) {
+      return `Yesterday, ${timeStr}`;
+    } else {
+      // Jika lebih lama, tampilkan tanggal lengkap (contoh: 07 Apr 2026, 14:05)
+      return `${date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })}, ${timeStr}`;
+    }
+  };
 
   const fetchPrivateTodos = async () => {
     try {
@@ -230,38 +270,41 @@ function TodoPage() {
   };
 
   const handleAddComment = async (todoId) => {
-    // 1. Ambil teks dan file gambar dari state
-    const text = commentInputs[todoId];
-    const imageFile = selectedCommentImages[todoId]; // File dari state 2.1 tadi
+    // 0. GUARD: Cegah klik ganda (Anti-Double Upload)
+    if (isCommentLoading[todoId]) return;
 
-    // 2. Validasi: Jangan kirim kalau tidak ada teks DAN tidak ada gambar
+    const text = commentInputs[todoId];
+    const imageFile = selectedCommentImages[todoId];
+
     if (!text?.trim() && !imageFile) return;
 
-    // 3. Gunakan FormData (Wajib untuk upload file)
+    // 1. SET LOADING TRUE (Hanya untuk ID ini)
+    setIsCommentLoading((prev) => ({ ...prev, [todoId]: true }));
+
     const formData = new FormData();
-    formData.append("content", text || ""); // Tetap pakai 'content' sesuai model backend
+    formData.append("content", text || "");
     if (imageFile) {
       formData.append("image", imageFile);
     }
 
     try {
-      // 4. Kirim ke API dengan header multipart/form-data
       const res = await api.post(`/comments/${todoId}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // 5. Update state komentar (Logika asli kamu tetap dipertahankan)
       setComments((prev) => ({
         ...prev,
         [todoId]: [...(prev[todoId] || []), res.data],
       }));
 
-      // 6. Reset input teks DAN reset pilihan gambar
       setCommentInputs((prev) => ({ ...prev, [todoId]: "" }));
       setSelectedCommentImages((prev) => ({ ...prev, [todoId]: null }));
     } catch (err) {
       console.error("Error detail:", err);
-      alert("Gagal mengirim komentar"); // Alert asli kamu tetap ada
+      alert("Gagal mengirim komentar");
+    } finally {
+      // 2. SET LOADING FALSE
+      setIsCommentLoading((prev) => ({ ...prev, [todoId]: false }));
     }
   };
 
@@ -655,8 +698,8 @@ function TodoPage() {
                         {todo.userId?.username || "Anonymous"}
                       </strong>
                       <span className="text-xs text-gray-500">
-                        {new Date(todo.createdAt).toLocaleString("id-ID")} • 🌍
-                        Public
+                        {/* ✅ Menggunakan formatTimestamp yang baru dibuat */}
+                        {formatTimestamp(todo.createdAt)} • 🌍 Public
                       </span>
                     </div>
                   </div>
@@ -836,10 +879,7 @@ function TodoPage() {
                               </span>
                               {/* ✅ 1. TIMESTAMP KOMENTAR */}
                               <span className="text-[9px] text-gray-400 font-medium">
-                                {new Date(comment.createdAt).toLocaleTimeString(
-                                  "id-ID",
-                                  { hour: "2-digit", minute: "2-digit" }
-                                )}
+                                {formatTimestamp(comment.createdAt)}
                               </span>
                             </div>
 
@@ -964,24 +1004,33 @@ function TodoPage() {
 
                         <button
                           onClick={() => handleAddComment(todo._id)}
+                          // ✅ Tombol mati jika sedang loading ATAU input kosong
                           disabled={
-                            !commentInputs[todo._id]?.trim() &&
-                            !selectedCommentImages[todo._id]
+                            isCommentLoading[todo._id] ||
+                            (!commentInputs[todo._id]?.trim() &&
+                              !selectedCommentImages[todo._id])
                           }
+                          className="disabled:opacity-50 transition-all"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`h-5 w-5 transition-colors ${
-                              commentInputs[todo._id]?.trim() ||
-                              selectedCommentImages[todo._id]
-                                ? "text-blue-600"
-                                : "text-gray-400"
-                            }`}
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                          </svg>
+                          {isCommentLoading[todo._id] ? (
+                            /* ✅ Tampilan saat Loading (Spinner kecil) */
+                            <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            /* ✅ Tampilan asli SVG kamu */
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className={`h-5 w-5 transition-colors ${
+                                commentInputs[todo._id]?.trim() ||
+                                selectedCommentImages[todo._id]
+                                  ? "text-blue-600"
+                                  : "text-gray-400"
+                              }`}
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </div>

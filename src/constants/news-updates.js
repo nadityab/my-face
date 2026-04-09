@@ -2,16 +2,56 @@
 
 export const NEWS_UPDATES = [
   {
-    version: "v1.7.0",
-    date: "Coming Soon",
-    title: "🔔 Engagement Hub",
-    color: "amber",
-    points: [
-      "Real-time Notifications: Dapatkan pemberitahuan instan saat ada yang mengomentari postinganmu.",
-      "Smart Mentions: Sebut temanmu dengan '@username' dan mereka akan mendapatkan notifikasi khusus.",
-      "Global Notification Center: Satu tempat untuk melihat semua interaksi yang masuk tanpa memenuhi feed.",
-      "Unread Badges: Penanda angka merah pada ikon lonceng agar tidak ada interaksi yang terlewat.",
+    version: "1.7.0",
+    updateTitle: "The Social & Clean Update",
+    releaseDate: "2026-04-09",
+    features: [
+      {
+        id: 1,
+        icon: "📸",
+        title: "Photo Comments",
+        description:
+          "Ekspresikan dirimu lebih maksimal! Sekarang kamu bisa membalas postingan dengan gambar lewat kolom komentar.",
+      },
+      {
+        id: 2,
+        icon: "❤️",
+        title: "Comment Likes",
+        description:
+          "Suka dengan pendapat teman? Berikan apresiasi langsung dengan tombol Like khusus di setiap komentar.",
+      },
+      {
+        id: 3,
+        icon: "🕒",
+        title: "Smart Timestamps",
+        description:
+          "Pantau obrolan secara real-time. Sekarang setiap komentar dilengkapi dengan waktu pengiriman yang presisi.",
+      },
+      {
+        id: 4,
+        icon: "🧹",
+        title: "Auto-Cleanup System",
+        description:
+          "Server kini lebih efisien! Jika postingan atau komentar dihapus, file gambar terkait otomatis dibersihkan.",
+      },
+      {
+        id: 5,
+        icon: "🔍",
+        title: "Live Image Preview",
+        description:
+          "Lihat dulu sebelum kirim! Ada kotak preview untuk memastikan fotomu sudah pas sebelum di-post.",
+      },
+      {
+        id: 6,
+        icon: "⚡",
+        title: "MVC Architecture",
+        description:
+          "Struktur kode profesional (Model-View-Controller) untuk performa yang lebih stabil dan ringan.",
+      },
     ],
+    isCriticalUpdate: false,
+    developerNotes:
+      "Update ini memfokuskan pada interaksi sosial dan manajemen penyimpanan server yang lebih bersih.",
   },
   {
     version: "v1.6.5",
