@@ -431,7 +431,7 @@ function TodoPage() {
     <div className="min-h-screen bg-gray-100 py-10 font-sans">
       <div className="max-w-xl mx-auto px-4">
         {/* --- FLOATING BUTTON WHAT'S NEW --- */}
-        <button
+        {/* <button
           onClick={() => setIsDrawerOpen(true)}
           className="fixed bottom-6 left-6 z-40 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-blue-100 text-blue-600 px-5 py-3 rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all group"
         >
@@ -658,16 +658,32 @@ function TodoPage() {
               </button>
             </div>
           </div>
+
+          {/* ✅ BAGIAN YANG DIGANTI: PREVIEW GAMBAR PROPORSIONAL + ANT DESIGN ZOOM */}
           {selectedImage && (
-            <div className="relative inline-block w-20 h-20 mt-2 ml-2">
-              <img
-                src={URL.createObjectURL(selectedImage)}
-                className="w-full h-full object-cover rounded-lg border"
-                alt="preview"
-              />
+            <div className="relative mt-2 ml-2 self-start inline-block animate-fade-in">
+              <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-gray-50 flex items-center justify-center p-1 shadow-inner">
+                <Image
+                  src={URL.createObjectURL(selectedImage)}
+                  // wrapperStyle membatasi kotak terluar Ant Design agar tidak melar (max 192px / h-48)
+                  wrapperStyle={{
+                    display: "flex",
+                    maxHeight: "192px",
+                    maxWidth: "300px",
+                  }}
+                  // style membatasi gambar di dalamnya dan menjaga proporsi (anti gepeng)
+                  style={{
+                    maxHeight: "192px",
+                    maxWidth: "300px",
+                    objectFit: "contain",
+                  }}
+                  className="rounded-md shadow-sm cursor-pointer"
+                  alt="preview"
+                />
+              </div>
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-md"
+                className="absolute -top-2.5 -right-2.5 bg-red-500 text-white rounded-full w-6 h-6 text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
               >
                 ✕
               </button>
@@ -768,13 +784,13 @@ function TodoPage() {
                     {todo.task}
                   </p>
                   {todo.image && (
-                    <div className="mt-3 rounded-lg overflow-hidden border bg-gray-100 flex justify-center items-center">
-                      {/* ✅ Kita buat container-nya punya background dan fotonya di tengah */}
+                    /* ✅ HAPUS class 'border' di div pembungkus */
+                    <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center">
                       <Image
                         src={`${API_URL}${todo.image}`}
                         alt="post"
+                        // ✅ Pertahankan max-h-112.5 agar tidak disunat
                         className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
-                        // Tambahkan width="100%" agar komponen Antd tahu dia harus fleksibel
                         width="100%"
                       />
                     </div>
@@ -893,8 +909,8 @@ function TodoPage() {
 
                             {/* ✅ 2. GAMBAR KOMENTAR (Jika ada) */}
                             {comment.image && (
-                              <div className="mt-2 rounded-lg overflow-hidden border border-gray-100 max-w-50">
-                                {/* ✅ Biar foto di komentar juga bisa di-zoom si Polee */}
+                              /* ✅ HAPUS class 'border' dan 'border-gray-100' di div pembungkus */
+                              <div className="mt-2 rounded-lg overflow-hidden max-w-50">
                                 <Image
                                   src={`${API_URL}${comment.image}`}
                                   alt="Comment attachment"
@@ -944,42 +960,61 @@ function TodoPage() {
                   </div>
 
                   {/* --- INPUT BAR KOMENTAR --- */}
-                  <div className="mt-4 flex flex-col gap-2">
-                    {/* ✅ 4. PREVIEW GAMBAR SEBELUM DIKIRIM */}
-                    {selectedCommentImages[todo._id] && (
-                      <div className="relative w-16 h-16 ml-10 mb-1">
-                        {/* ✅ Menggunakan Ant Design Image untuk preview lokal */}
-                        <Image
-                          src={URL.createObjectURL(
-                            selectedCommentImages[todo._id]
-                          )}
-                          className="w-full h-full object-cover rounded-lg border-2 border-blue-500 shadow-sm cursor-zoom-in"
-                          alt="preview"
-                        />
+                  {/* ✅ Menggunakan items-end agar Avatar tetap di bawah jika kotak abu-abu membesar ke atas */}
+                  <div className="mt-4 flex gap-2 items-end">
+                    {/* Avatar User */}
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm mb-1">
+                      {currentUser?.username?.charAt(0).toUpperCase() || "?"}
+                    </div>
 
-                        {/* Tombol Hapus - Tetap original sesuai kodingan kamu */}
-                        <button
-                          onClick={() =>
-                            setSelectedCommentImages({
-                              ...selectedCommentImages,
-                              [todo._id]: null,
-                            })
-                          }
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center shadow-md hover:bg-red-600 z-10"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
+                    {/* ✅ BUBBLE ABU-ABU UTAMA (Diubah menjadi flex-col agar bisa menumpuk gambar & teks) */}
+                    <div className="flex-1 flex flex-col bg-gray-100 rounded-2xl p-2 shadow-inner transition-all">
+                      {/* ✅ 1. AREA PREVIEW GAMBAR (Di atas input teks) */}
+                      {selectedCommentImages[todo._id] && (
+                        <div className="relative self-start mb-2 ml-1">
+                          {/* Kotak pembungkus gambar agar rapi dan tidak tembus */}
+                          <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-black/5 flex items-center justify-center p-0.5">
+                            {/* Menggunakan tag img bawaan khusus untuk preview agar ukurannya patuh 100% */}
+                            {/* ✅ DIGANTI JADI ANT DESIGN IMAGE BIAR BISA DI-ZOOM */}
+                            <Image
+                              src={URL.createObjectURL(
+                                selectedCommentImages[todo._id]
+                              )}
+                              // wrapperStyle membatasi kotak terluar Ant Design agar tidak melar (128px = h-32)
+                              wrapperStyle={{
+                                display: "flex",
+                                maxHeight: "128px",
+                                maxWidth: "200px",
+                              }}
+                              // style membatasi gambar di dalamnya dan menjaga proporsi (anti gepeng)
+                              style={{
+                                maxHeight: "128px",
+                                maxWidth: "200px",
+                                objectFit: "contain",
+                              }}
+                              className="rounded-md shadow-sm cursor-pointer"
+                              alt="preview"
+                            />
+                          </div>
+                          {/* Tombol Hapus (Silang) */}
+                          <button
+                            onClick={() =>
+                              setSelectedCommentImages({
+                                ...selectedCommentImages,
+                                [todo._id]: null,
+                              })
+                            }
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[11px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
 
-                    <div className="flex gap-2 items-center">
-                      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm">
-                        {currentUser?.username?.charAt(0).toUpperCase() || "?"}
-                      </div>
-
-                      <div className="flex-1 flex items-center bg-gray-100 rounded-2xl px-3 py-1.5 shadow-inner group">
-                        {/* ✅ 5. TOMBOL PILIH GAMBAR */}
-                        <label className="mr-2 cursor-pointer hover:scale-110 transition-transform active:scale-95 grayscale hover:grayscale-0">
+                      {/* ✅ 2. BARIS INPUT TEKS & ICON (Di bawah preview) */}
+                      <div className="flex items-center w-full">
+                        {/* Icon Kamera (Selalu Muncul di sebelah kiri) */}
+                        <label className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500">
                           <span className="text-lg">📷</span>
                           <input
                             type="file"
@@ -994,6 +1029,7 @@ function TodoPage() {
                           />
                         </label>
 
+                        {/* Input Teks Utama */}
                         <input
                           id={`input-comment-${todo._id}`}
                           type="text"
@@ -1008,24 +1044,22 @@ function TodoPage() {
                           onKeyDown={(e) =>
                             e.key === "Enter" && handleAddComment(todo._id)
                           }
-                          className="flex-1 bg-transparent border-none outline-none text-sm py-1"
+                          className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400"
                         />
 
+                        {/* Tombol Kirim */}
                         <button
                           onClick={() => handleAddComment(todo._id)}
-                          // ✅ Tombol mati jika sedang loading ATAU input kosong
                           disabled={
                             isCommentLoading[todo._id] ||
                             (!commentInputs[todo._id]?.trim() &&
                               !selectedCommentImages[todo._id])
                           }
-                          className="disabled:opacity-50 transition-all"
+                          className="disabled:opacity-50 transition-all ml-2 shrink-0 pr-1"
                         >
                           {isCommentLoading[todo._id] ? (
-                            /* ✅ Tampilan saat Loading (Spinner kecil) */
                             <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            /* ✅ Tampilan asli SVG kamu */
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className={`h-5 w-5 transition-colors ${
