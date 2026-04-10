@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom"; // Tambahkan ini
 import { jwtDecode } from "jwt-decode";
 // Jika nama filenya newsupdates.js (u kecil), maka importnya:
+import axios from "axios";
 import { NEWS_UPDATES } from "../constants/news-updates";
 // ✅ Pastikan importnya mengarah ke file api.js yang kita buat tadi
 import api, { API_URL } from "../api";
@@ -173,36 +174,32 @@ function TodoPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    // Validasi: Jangan submit kalau teks kosong DAN gambar kosong
+
     if (!inputTask.trim() && selectedImages.length === 0) return;
 
     setIsLoading(true);
     const formData = new FormData();
     formData.append("task", inputTask);
 
-    // ✅ CARA BARU KIRIM BANYAK GAMBAR KE BACKEND
     if (selectedImages.length > 0) {
       selectedImages.forEach((image) => {
-        // Pastikan namanya "images" (pakai 's'), sesuai dengan Multer di backend!
         formData.append("images", image);
       });
     }
 
     try {
-      // URL endpoint pastikan sesuai dengan punya kamu
-      await axios.post(`${API_URL}/api/todos`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`, // Asumsi kamu pakai token auth
-        },
-      });
+      // 🔥 CLEAN ARCHITECTURE:
+      // 1. Tidak perlu `${API_URL}` karena sudah ada di baseURL api.js
+      // 2. Tidak perlu header Token, karena sudah diurus Interceptor Request
+      // 3. Tidak perlu Content-Type, karena Axios otomatis mendeteksi FormData
+      await api.post("/todos", formData);
 
       setInputTask("");
-      setSelectedImages([]); // ✅ Kosongkan array gambar setelah sukses
-      fetchTodos(); // Refresh feed
+      setSelectedImages([]);
+      fetchAllTodos();
     } catch (error) {
       console.error("Error menambah todo:", error);
-      // Tambahkan notifikasi error jika ada
+      // Error 401 (Expired) sudah otomatis melempar user ke /login berkat Interceptor Response!
     } finally {
       setIsLoading(false);
     }
@@ -687,10 +684,12 @@ function TodoPage() {
                     <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-gray-50 flex items-center justify-center p-1 shadow-sm h-28 w-28 transition-transform group-hover:scale-[1.02]">
                       <Image
                         src={URL.createObjectURL(file)}
-                        wrapperStyle={{
-                          display: "flex",
-                          height: "100%",
-                          width: "100%",
+                        styles={{
+                          root: {
+                            display: "flex",
+                            maxHeight: "192px",
+                            maxWidth: "300px",
+                          },
                         }}
                         // Pakai object-cover agar preview terlihat rapi seragam kotak-kotak
                         style={{
@@ -815,56 +814,120 @@ function TodoPage() {
                     {todo.task}
                   </p>
 
-                  {/* ✅ LOGIKA 1: UNTUK POSTINGAN BARU (CAROUSEL / BANYAK GAMBAR) */}
+                  {/* ✅ LOGIKA 1: UNTUK POSTINGAN BARU (BANYAK GAMBAR - ALA FACEBOOK) */}
                   {todo.images && todo.images.length > 0 && (
                     <div className="mt-3 -mx-4 sm:mx-0">
-                      {todo.images.length === 1 ? (
-                        /* Jika hanya 1 gambar */
-                        <div className="rounded-lg overflow-hidden flex justify-center items-center">
-                          <Image
-                            src={`${API_URL}${todo.images[0]}`}
-                            alt="post"
-                            className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
-                            width="100%"
-                          />
-                        </div>
-                      ) : (
-                        /* Jika banyak gambar (Carousel) */
-                        <div className="relative group">
-                          <Image.PreviewGroup>
-                            <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar">
-                              {todo.images.map((img, index) => (
-                                <div
-                                  key={index}
-                                  className="relative w-full shrink-0 snap-center flex justify-center bg-gray-50/50"
-                                >
-                                  {/* Badge Indikator Halaman */}
-                                  <div className="absolute top-3 right-3 bg-black/60 text-white text-[11px] px-2 py-1 rounded-full z-10 font-semibold shadow-sm tracking-widest backdrop-blur-sm">
-                                    {index + 1}/{todo.images.length}
-                                  </div>
-                                  <Image
-                                    src={`${API_URL}${img}`}
-                                    alt={`post-${index}`}
-                                    className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
-                                    width="100%"
-                                  />
-                                </div>
-                              ))}
+                      <Image.PreviewGroup>
+                        {/* JIKA 1 GAMBAR: Tampil Penuh */}
+                        {todo.images.length === 1 && (
+                          <div className="rounded-lg overflow-hidden flex justify-center items-center bg-gray-50">
+                            <Image
+                              src={`${API_URL}${todo.images[0]}`}
+                              alt="post"
+                              className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer sm:rounded-xl"
+                              width="100%"
+                            />
+                          </div>
+                        )}
+
+                        {/* JIKA 2 GAMBAR: Dibagi 2 Kolom Sejajar */}
+                        {todo.images.length === 2 && (
+                          <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden">
+                            <Image
+                              src={`${API_URL}${todo.images[0]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+                            <Image
+                              src={`${API_URL}${todo.images[1]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+                          </div>
+                        )}
+
+                        {/* JIKA 3 GAMBAR: 1 Besar di Atas, 2 Kecil di Bawah */}
+                        {todo.images.length === 3 && (
+                          <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden">
+                            <div className="col-span-2">
+                              <Image
+                                src={`${API_URL}${todo.images[0]}`}
+                                className="aspect-video object-cover w-full cursor-pointer"
+                                width="100%"
+                              />
                             </div>
-                          </Image.PreviewGroup>
-                        </div>
-                      )}
+                            <Image
+                              src={`${API_URL}${todo.images[1]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+                            <Image
+                              src={`${API_URL}${todo.images[2]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+                          </div>
+                        )}
+
+                        {/* JIKA 4 GAMBAR ATAU LEBIH: 1 Besar di Atas, 3 Kecil di Bawah + Angka Sisa */}
+                        {todo.images.length >= 4 && (
+                          <div className="grid grid-cols-3 gap-1 sm:rounded-xl overflow-hidden">
+                            <div className="col-span-3">
+                              <Image
+                                src={`${API_URL}${todo.images[0]}`}
+                                className="aspect-video object-cover w-full cursor-pointer"
+                                width="100%"
+                              />
+                            </div>
+                            <Image
+                              src={`${API_URL}${todo.images[1]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+                            <Image
+                              src={`${API_URL}${todo.images[2]}`}
+                              className="aspect-square object-cover w-full cursor-pointer"
+                              width="100%"
+                            />
+
+                            {/* Kotak Terakhir (Gambar Ke-4) dengan Overlay Angka */}
+                            <div className="relative w-full h-full">
+                              <Image
+                                src={`${API_URL}${todo.images[3]}`}
+                                className="aspect-square object-cover w-full cursor-pointer block"
+                                width="100%"
+                              />
+
+                              {/* Overlay Hitam Transparan "+X" (Hanya muncul jika lebih dari 4) */}
+                              {todo.images.length > 4 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-2xl font-bold pointer-events-none shadow-inner">
+                                  +{todo.images.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Trik Rahasia Ant Design: Me-render sisa gambar secara kasat mata (hidden) 
+            agar saat di-zoom, user tetap bisa geser ke gambar ke-5, ke-6, dst. */}
+                        {todo.images.length > 4 && (
+                          <div className="hidden">
+                            {todo.images.slice(4).map((img, index) => (
+                              <Image key={index + 4} src={`${API_URL}${img}`} />
+                            ))}
+                          </div>
+                        )}
+                      </Image.PreviewGroup>
                     </div>
                   )}
 
-                  {/* ✅ LOGIKA 2: FALLBACK UNTUK POSTINGAN LAMA (Yang cuma punya 1 gambar di todo.image) */}
+                  {/* ✅ LOGIKA 2: FALLBACK UNTUK POSTINGAN LAMA (Tetap Aman!) */}
                   {todo.image && (!todo.images || todo.images.length === 0) && (
-                    <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center">
+                    <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center bg-gray-50">
                       <Image
                         src={`${API_URL}${todo.image}`}
                         alt="post"
-                        // ✅ Pertahankan max-h-112.5 agar tidak disunat
-                        className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
+                        className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer sm:rounded-xl"
                         width="100%"
                       />
                     </div>
@@ -1055,10 +1118,12 @@ function TodoPage() {
                                 selectedCommentImages[todo._id]
                               )}
                               // wrapperStyle membatasi kotak terluar Ant Design agar tidak melar (128px = h-32)
-                              wrapperStyle={{
-                                display: "flex",
-                                maxHeight: "128px",
-                                maxWidth: "200px",
+                              styles={{
+                                root: {
+                                  display: "flex",
+                                  maxHeight: "192px",
+                                  maxWidth: "300px",
+                                },
                               }}
                               // style membatasi gambar di dalamnya dan menjaga proporsi (anti gepeng)
                               style={{
