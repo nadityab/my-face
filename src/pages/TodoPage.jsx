@@ -14,7 +14,7 @@ function TodoPage() {
   const [editText, setEditText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]); //carousell
   const [editImage, setEditImage] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -173,34 +173,36 @@ function TodoPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!inputTask && !selectedImage) return;
+    // Validasi: Jangan submit kalau teks kosong DAN gambar kosong
+    if (!inputTask.trim() && selectedImages.length === 0) return;
 
     setIsLoading(true);
-
     const formData = new FormData();
     formData.append("task", inputTask);
-    if (selectedImage) formData.append("image", selectedImage);
+
+    // ✅ CARA BARU KIRIM BANYAK GAMBAR KE BACKEND
+    if (selectedImages.length > 0) {
+      selectedImages.forEach((image) => {
+        // Pastikan namanya "images" (pakai 's'), sesuai dengan Multer di backend!
+        formData.append("images", image);
+      });
+    }
 
     try {
-      await api.post("/todos", formData, {
+      // URL endpoint pastikan sesuai dengan punya kamu
+      await axios.post(`${API_URL}/api/todos`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`, // Asumsi kamu pakai token auth
         },
       });
 
       setInputTask("");
-      setSelectedImage(null);
-      if (document.getElementById("imageInput")) {
-        document.getElementById("imageInput").value = "";
-      }
-      fetchAllTodos();
-    } catch (err) {
-      console.error("Gagal tambah postingan", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Sesi habis atau token kadaluarsa, silakan login kembali.");
-      } else {
-        alert("Gagal memposting, coba lagi nanti.");
-      }
+      setSelectedImages([]); // ✅ Kosongkan array gambar setelah sukses
+      fetchTodos(); // Refresh feed
+    } catch (error) {
+      console.error("Error menambah todo:", error);
+      // Tambahkan notifikasi error jika ada
     } finally {
       setIsLoading(false);
     }
@@ -600,7 +602,7 @@ function TodoPage() {
           </div>
         </div>
 
-        {/* --- FORM TAMBAH POST --- */}
+        {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
         <form
           onSubmit={handleAdd}
           className="mb-8 bg-white p-3 sm:p-4 rounded-xl shadow-sm flex flex-col gap-3 mx-2 sm:mx-0 overflow-hidden"
@@ -617,13 +619,22 @@ function TodoPage() {
             </div>
             <div className="shrink-0 flex items-center gap-1 sm:gap-2">
               <label className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
+                {/* ✅ DITAMBAHKAN ATRIBUT 'multiple' AGAR BISA PILIH BANYAK FOTO */}
                 <input
                   id="imageInput"
                   type="file"
+                  multiple
                   accept="image/*"
-                  onChange={(e) => setSelectedImage(e.target.files[0])}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    // Gabungkan foto lama dengan foto baru, batasi maksimal 5 foto
+                    setSelectedImages((prev) =>
+                      [...prev, ...files].slice(0, 10)
+                    );
+                  }}
                   className="hidden"
                 />
+
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500"
@@ -659,34 +670,54 @@ function TodoPage() {
             </div>
           </div>
 
-          {/* ✅ BAGIAN YANG DIGANTI: PREVIEW GAMBAR PROPORSIONAL + ANT DESIGN ZOOM */}
-          {selectedImage && (
-            <div className="relative mt-2 ml-2 self-start inline-block animate-fade-in">
-              <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-gray-50 flex items-center justify-center p-1 shadow-inner">
-                <Image
-                  src={URL.createObjectURL(selectedImage)}
-                  // wrapperStyle membatasi kotak terluar Ant Design agar tidak melar (max 192px / h-48)
-                  wrapperStyle={{
-                    display: "flex",
-                    maxHeight: "192px",
-                    maxWidth: "300px",
-                  }}
-                  // style membatasi gambar di dalamnya dan menjaga proporsi (anti gepeng)
-                  style={{
-                    maxHeight: "192px",
-                    maxWidth: "300px",
-                    objectFit: "contain",
-                  }}
-                  className="rounded-md shadow-sm cursor-pointer"
-                  alt="preview"
-                />
+          {/* ✅ AREA PREVIEW HORIZONTAL (BISA DI-SCROLL KE SAMPING) */}
+          {selectedImages.length > 0 && (
+            <div className="mt-2 ml-1">
+              <p className="text-[10px] text-gray-400 mb-1.5 font-medium">
+                Terpilih: {selectedImages.length}/10 foto
+              </p>
+
+              {/* Container flex dengan overflow-x-auto untuk scroll horizontal */}
+              <div className="flex gap-3 overflow-x-auto pb-2 pt-1 px-1 custom-scrollbar snap-x">
+                {selectedImages.map((file, index) => (
+                  <div
+                    key={index}
+                    className="relative shrink-0 snap-start animate-fade-in group"
+                  >
+                    <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-gray-50 flex items-center justify-center p-1 shadow-sm h-28 w-28 transition-transform group-hover:scale-[1.02]">
+                      <Image
+                        src={URL.createObjectURL(file)}
+                        wrapperStyle={{
+                          display: "flex",
+                          height: "100%",
+                          width: "100%",
+                        }}
+                        // Pakai object-cover agar preview terlihat rapi seragam kotak-kotak
+                        style={{
+                          height: "100%",
+                          width: "100%",
+                          objectFit: "cover",
+                        }}
+                        className="rounded-md cursor-pointer"
+                        alt={`preview-${index}`}
+                      />
+                    </div>
+
+                    {/* Tombol Hapus Spesifik per Foto */}
+                    <button
+                      type="button" // Wajib type="button" agar tidak memicu submit form
+                      onClick={() =>
+                        setSelectedImages(
+                          selectedImages.filter((_, i) => i !== index)
+                        )
+                      }
+                      className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button
-                onClick={() => setSelectedImage(null)}
-                className="absolute -top-2.5 -right-2.5 bg-red-500 text-white rounded-full w-6 h-6 text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
-              >
-                ✕
-              </button>
             </div>
           )}
         </form>
@@ -783,8 +814,51 @@ function TodoPage() {
                   <p className="text-base leading-relaxed text-gray-800 mb-3">
                     {todo.task}
                   </p>
-                  {todo.image && (
-                    /* ✅ HAPUS class 'border' di div pembungkus */
+
+                  {/* ✅ LOGIKA 1: UNTUK POSTINGAN BARU (CAROUSEL / BANYAK GAMBAR) */}
+                  {todo.images && todo.images.length > 0 && (
+                    <div className="mt-3 -mx-4 sm:mx-0">
+                      {todo.images.length === 1 ? (
+                        /* Jika hanya 1 gambar */
+                        <div className="rounded-lg overflow-hidden flex justify-center items-center">
+                          <Image
+                            src={`${API_URL}${todo.images[0]}`}
+                            alt="post"
+                            className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
+                            width="100%"
+                          />
+                        </div>
+                      ) : (
+                        /* Jika banyak gambar (Carousel) */
+                        <div className="relative group">
+                          <Image.PreviewGroup>
+                            <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar">
+                              {todo.images.map((img, index) => (
+                                <div
+                                  key={index}
+                                  className="relative w-full shrink-0 snap-center flex justify-center bg-gray-50/50"
+                                >
+                                  {/* Badge Indikator Halaman */}
+                                  <div className="absolute top-3 right-3 bg-black/60 text-white text-[11px] px-2 py-1 rounded-full z-10 font-semibold shadow-sm tracking-widest backdrop-blur-sm">
+                                    {index + 1}/{todo.images.length}
+                                  </div>
+                                  <Image
+                                    src={`${API_URL}${img}`}
+                                    alt={`post-${index}`}
+                                    className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
+                                    width="100%"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </Image.PreviewGroup>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ✅ LOGIKA 2: FALLBACK UNTUK POSTINGAN LAMA (Yang cuma punya 1 gambar di todo.image) */}
+                  {todo.image && (!todo.images || todo.images.length === 0) && (
                     <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center">
                       <Image
                         src={`${API_URL}${todo.image}`}

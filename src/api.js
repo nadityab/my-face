@@ -1,7 +1,7 @@
 import axios from "axios";
 
-export const API_URL = "https://api.myface.fun";
-//xport const API_URL = "http://localhost:3000";
+//export const API_URL = "https://api.myface.fun";
+export const API_URL = "http://localhost:3000";
 
 const api = axios.create({
   baseURL: API_URL,
