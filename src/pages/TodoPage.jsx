@@ -20,6 +20,14 @@ function TodoPage() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showNews, setShowNews] = useState(false);
+  // 1. State untuk melacak apakah daftar versi dibuka semua atau tidak
+  const [showAllVersions, setShowAllVersions] = useState(false);
+
+  // 2. Logika pemotongan otomatis
+  const displayedUpdates = showAllVersions
+    ? NEWS_UPDATES
+    : NEWS_UPDATES.slice(0, 2);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isCommentLoading, setIsCommentLoading] = useState({});
   const { postId } = useParams();
@@ -581,42 +589,67 @@ function TodoPage() {
                     ← Kembali ke Menu
                   </button>
                 </div>
+
                 <div className="flex-1 overflow-y-auto pr-2 pl-6 space-y-6 touch-pan-y overscroll-contain custom-scrollbar">
-                  {NEWS_UPDATES.map((update) => (
-                    <section
-                      key={update.version}
-                      className="relative pl-8 border-l-2 border-gray-100 last:border-l-transparent pb-4"
-                    >
-                      <span
-                        className={`absolute -left-2.25 top-1 h-4 w-4 rounded-full border-4 border-white shadow-sm ${
-                          update.version === NEWS_UPDATES[0].version
-                            ? "bg-blue-500"
-                            : "bg-gray-300"
-                        }`}
-                      ></span>
-                      <div className="mb-1">
+                  {/* ✅ KODINGAN MAPPING YANG SUDAH BERSIH DAN DINAMIS */}
+                  {displayedUpdates.map((update) => {
+                    // Mapping warna agar rapi dan best practice
+                    const colorMap = {
+                      blue: "bg-blue-50 text-blue-600",
+                      indigo: "bg-indigo-50 text-indigo-600",
+                      purple: "bg-purple-50 text-purple-600",
+                      green: "bg-green-50 text-green-600",
+                    };
+                    const badgeColor =
+                      colorMap[update.color] || "bg-gray-100 text-gray-500";
+
+                    return (
+                      <section
+                        key={update.version}
+                        className="relative pl-8 border-l-2 border-gray-100 last:border-l-transparent pb-4"
+                      >
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
-                            update.color === "blue"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-gray-100 text-gray-500"
+                          className={`absolute -left-2.25 top-1 h-4 w-4 rounded-full border-4 border-white shadow-sm ${
+                            update.version === NEWS_UPDATES[0].version
+                              ? "bg-blue-500"
+                              : "bg-gray-300"
                           }`}
-                        >
-                          {update.version} • {update.date}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-gray-800 text-sm">
-                        {update.title}
-                      </h3>
-                      <ul className="text-xs text-gray-500 list-disc ml-4 mt-2 space-y-2">
-                        {update.points.map((point, pIdx) => (
-                          <li key={pIdx} className="leading-relaxed">
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ))}
+                        ></span>
+                        <div className="mb-1">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${badgeColor}`}
+                          >
+                            {update.version} • {update.date}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-gray-800 text-sm">
+                          {update.title}
+                        </h3>
+                        <ul className="text-xs text-gray-500 list-disc ml-4 mt-2 space-y-2">
+                          {update.points.map((point, pIdx) => (
+                            <li key={pIdx} className="leading-relaxed">
+                              {point}
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    );
+                  })}
+
+                  {/* ✅ TOMBOL SHOW MORE / SHOW LESS */}
+                  {NEWS_UPDATES.length > 3 && (
+                    <div className="pt-2 pb-4 flex justify-center">
+                      <button
+                        onClick={() => setShowAllVersions(!showAllVersions)}
+                        className="text-xs font-semibold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1 px-4 py-2 bg-gray-50 rounded-full hover:bg-blue-50"
+                      >
+                        {showAllVersions
+                          ? "Sembunyikan Versi Lama 🔼"
+                          : "Lihat Versi Sebelumnya 🔽"}
+                      </button>
+                    </div>
+                  )}
+
                   <div className="h-24" />
                 </div>
               </div>

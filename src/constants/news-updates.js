@@ -2,10 +2,47 @@
 
 export const NEWS_UPDATES = [
   {
+    version: "v1.11.0",
+    date: "12 April 2026",
+    title: "🧹 Clean Architecture & Smart UI",
+    color: "green",
+    points: [
+      "Smart Drawer Optimization: Riwayat pembaruan (What's New) kini dilindungi fitur 'Show More/Less'. Tampilan awal auto-ngebut tanpa lag karena hanya me-render 3 pembaruan terbaru.",
+      "Clean Code Handlers: Refactoring total pada logika upload gambar. Pemisahan UI dengan fungsi 'Otak' (Handler) membuat aplikasi lebih ringan dan berstandar Enterprise.",
+      "Bulletproof Styling System: Implementasi kamus warna (Color Map) dinamis untuk memastikan badge versi selalu tampil sempurna tanpa risiko bug CSS saat proses build.",
+      "Enhanced File Input Memory: Menambahkan trik reset memori pada input file, memberikan kebebasan penuh bagi user untuk membatalkan dan memilih kembali gambar yang sama tanpa error.",
+    ],
+  },
+  {
+    version: "v1.10.0",
+    date: "12 April 2026",
+    title: "📐 Dynamic Grid & Smart Input Experience",
+    color: "blue",
+    points: [
+      "Facebook-Style Grid Gallery: Menggantikan sistem carousel dengan layout grid cerdas yang otomatis menyesuaikan susunan foto (mendukung hingga 10 gambar dengan indikator overlay '+X').",
+      "Smart Auto-Resizing Input: Kolom status dan komentar kini otomatis membesar ke bawah sesuai panjang teks (mendukung baris baru) dan meramping kembali setelah dikirim.",
+      "Supercharged Upload Limit: Kapasitas unggah foto digandakan menjadi maksimal 10 gambar per postingan.",
+      "Smart File Size Protection: Sistem validasi otomatis di Frontend dan Backend untuk menolak file di atas 10MB, lengkap dengan pop-up peringatan agar server tetap aman.",
+      "Refined Comment UX: Mencegah salah kirim! Menekan tombol 'Enter' pada kolom komentar kini murni membuat baris baru. Pengiriman komentar wajib menggunakan icon pesawat kertas.",
+      "Clean API Architecture: Refactoring sistem request di balik layar menggunakan Axios Interceptors. Manajemen token dan Base URL kini otomatis, membuat performa aplikasi sekelas Enterprise.",
+    ],
+  },
+  {
+    version: "v1.9.0",
+    date: "11 April 2026",
+    title: "🎠 Interactive Image Carousel",
+    color: "purple",
+    points: [
+      "Multi-Image Support: Pengguna kini dapat mengunggah beberapa foto sekaligus dalam satu kali postingan.",
+      "Smooth Carousel Navigation: Tampilan feed diperbarui dengan sistem carousel interaktif. Tinggal geser (swipe) atau klik navigasi untuk melihat rentetan foto dengan mulus.",
+      "Optimized Image Rendering: Penyesuaian tata letak agar gambar tetap proporsional dan tidak terpotong saat digeser.",
+    ],
+  },
+  {
     version: "v1.8.0",
     date: "10 April 2026",
     title: "🖼️ Visual & Smart Experience",
-    color: "blue",
+    color: "indigo",
     points: [
       "Pro Image Preview: Fitur Zoom, Rotate, dan Pan menggunakan integrasi Ant Design untuk pengalaman melihat foto yang lebih premium.",
       "Smart Timestamps: Label waktu yang lebih manusiawi, otomatis berubah menjadi 'Today' atau 'Yesterday' sesuai harinya.",
@@ -19,7 +56,7 @@ export const NEWS_UPDATES = [
     version: "v1.7.0",
     date: "9 April 2026",
     title: "📸 Social & Storage Optimization",
-    color: "gray",
+    color: "indigo",
     points: [
       "Comment Image Upload: Mendukung unggah gambar pada setiap balasan komentar di postingan.",
       "Comment Like System: Berikan apresiasi pada komentar teman dengan fitur Like khusus komentar.",
@@ -32,7 +69,7 @@ export const NEWS_UPDATES = [
     version: "v1.6.5",
     date: "9 April 2026",
     title: "🚀 Deep Connection & Navigation",
-    color: "gray",
+    color: "indigo",
     points: [
       "Smart Deep Linking: Klik link share dan aplikasi akan otomatis meluncur (scroll) ke postingan yang dimaksud.",
       "Visual Post Highlighting: Efek 'Glow' biru pada postingan target agar user langsung tahu apa yang dibagikan.",
@@ -45,7 +82,7 @@ export const NEWS_UPDATES = [
     version: "v1.6.0",
     date: "8 April 2026",
     title: "🆔 Identity & Instant Response",
-    color: "gray",
+    color: "indigo",
     points: [
       "Case-Sensitive Identity: Mendukung penggunaan huruf kapital pada username (Contoh: 'Polee' tidak lagi dipaksa menjadi 'polee').",
       "Optimistic Like System: Reaksi Like terasa instan! Warna berubah dalam sekejap tanpa menunggu respon server.",
@@ -58,7 +95,7 @@ export const NEWS_UPDATES = [
     version: "v1.5.0",
     date: "7 April 2026",
     title: "💬 Social Interaction Engine",
-    color: "gray",
+    color: "indigo",
     points: [
       "Facebook-Style Comments: Sistem komentar dengan tampilan bubble modern yang interaktif.",
       "Smart Comment Slicing: Secara otomatis menampilkan 3 komentar terbaru untuk menjaga kebersihan feed.",
@@ -71,7 +108,7 @@ export const NEWS_UPDATES = [
     version: "v1.4.0",
     date: "6 April 2026",
     title: "⚡ Performance & Stability",
-    color: "gray",
+    color: "indigo",
     points: [
       "Double-Post Prevention: Sistem proteksi tombol 'Post' untuk mencegah postingan ganda saat upload.",
       "Silent Refresh Token: Sesi login kini lebih cerdas dengan pembaruan token otomatis di latar belakang.",
@@ -83,7 +120,7 @@ export const NEWS_UPDATES = [
     version: "v1.3.0",
     date: "4 April 2026",
     title: "💎 Premium UI & Navigation",
-    color: "gray",
+    color: "indigo",
     points: [
       "Sticky Glassmorphism Header: Efek blur transparan pada header utama.",
       "Hamburger Navigation: Menu drawer samping untuk navigasi yang lebih bersih.",
@@ -95,7 +132,7 @@ export const NEWS_UPDATES = [
     version: "v1.2.0",
     date: "4 April 2026",
     title: "🔐 Security & Auth",
-    color: "gray",
+    color: "indigo",
     points: [
       "Persistent Login: Sesi tetap aktif meskipun tab browser ditutup.",
       "Route Protection: Otomatis mengarahkan user ke login jika token tidak ada.",
@@ -106,7 +143,7 @@ export const NEWS_UPDATES = [
     version: "v1.1.0",
     date: "3 April 2026",
     title: "🖼️ Media Engine",
-    color: "gray",
+    color: "indigo",
     points: [
       "WebP Conversion: Otomatis mengubah format gambar untuk kecepatan load.",
       "Smart Compression: Mengurangi ukuran file tanpa merusak kualitas visual.",
