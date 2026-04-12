@@ -209,6 +209,59 @@ function TodoPage() {
     }
   };
 
+  // ✅ CLEAN ARCHITECTURE: Fungsi khusus menangani logika pemilihan gambar
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    const MAX_SIZE = 10 * 1024 * 1024; // Limit 10MB per file
+
+    // 1. Validasi Ukuran File
+    files.forEach((file) => {
+      if (file.size > MAX_SIZE) {
+        alert(
+          `Waduh, ukuran gambar "${file.name}" terlalu besar! Maksimal 10MB ya.`
+        );
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    // 2. Gabungkan foto lama dengan foto baru yang lolos sensor, batasi maksimal 10 foto
+    if (validFiles.length > 0) {
+      setSelectedImages((prev) => [...prev, ...validFiles].slice(0, 10));
+    }
+
+    // 3. Reset input form agar user bisa memilih file yang sama jika sebelumnya di-cancel
+    e.target.value = "";
+  };
+
+  // ✅ CLEAN ARCHITECTURE: Fungsi khusus menangani gambar komentar (Single File)
+  const handleCommentImageChange = (e, todoId) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // Limit 10MB
+
+    // Validasi Ukuran File
+    if (file.size > MAX_SIZE) {
+      alert(
+        `Waduh, ukuran gambar "${file.name}" terlalu besar! Maksimal 10MB ya.`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    // Simpan ke state khusus komentar (menggunakan todoId sebagai kunci)
+    setSelectedCommentImages((prev) => ({
+      ...prev,
+      [todoId]: file,
+    }));
+
+    // Reset input form
+    e.target.value = "";
+  };
+
   const handleToggle = async (todo) => {
     try {
       await api.put(`/todos/${todo._id}`, {
@@ -292,17 +345,24 @@ function TodoPage() {
     }
 
     try {
-      const res = await api.post(`/comments/${todoId}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // 🔥 CLEAN ARCHITECTURE: Header otomatis diurus oleh Axios
+      const res = await api.post(`/comments/${todoId}`, formData);
 
+      // Update state komentar tanpa harus fetchAllTodos (Sangat optimal!)
       setComments((prev) => ({
         ...prev,
         [todoId]: [...(prev[todoId] || []), res.data],
       }));
 
+      // Kosongkan input state
       setCommentInputs((prev) => ({ ...prev, [todoId]: "" }));
       setSelectedCommentImages((prev) => ({ ...prev, [todoId]: null }));
+
+      // ✅ KEMPESKAN KOTAK TEKS (Penting agar UI tidak bug)
+      const commentInput = document.getElementById(`input-comment-${todoId}`);
+      if (commentInput) {
+        commentInput.style.height = "auto";
+      }
     } catch (err) {
       console.error("Error detail:", err);
       alert("Gagal mengirim komentar");
@@ -632,13 +692,7 @@ function TodoPage() {
                   type="file"
                   multiple
                   accept="image/*"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files);
-                    // Gabungkan foto lama dengan foto baru, batasi maksimal 5 foto
-                    setSelectedImages((prev) =>
-                      [...prev, ...files].slice(0, 10)
-                    );
-                  }}
+                  onChange={handleImageChange} // 🔥 Cuma butuh 1 baris pemanggilan ini!
                   className="hidden"
                 />
 
@@ -1163,23 +1217,27 @@ function TodoPage() {
                       {/* ✅ 2. BARIS INPUT TEKS & ICON (Di bawah preview) */}
                       <div className="flex items-center w-full">
                         {/* Icon Kamera (Selalu Muncul di sebelah kiri) */}
-                        <label className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500">
+                        {/* Icon Kamera (Selalu Muncul di sebelah kiri) */}
+                        <label
+                          htmlFor={`upload-comment-image-${todo._id}`} // ✅ Tambahkan htmlFor agar label dan input terhubung sempurna
+                          className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500"
+                        >
                           <span className="text-lg">📷</span>
                           <input
+                            id={`upload-comment-image-${todo._id}`} // ✅ ID disamakan dengan htmlFor
                             type="file"
                             className="hidden"
                             accept="image/*"
+                            // ✅ PANGGIL FUNGSI CLEAN ARCHITECTURE DI SINI
                             onChange={(e) =>
-                              setSelectedCommentImages({
-                                ...selectedCommentImages,
-                                [todo._id]: e.target.files[0],
-                              })
+                              handleCommentImageChange(e, todo._id)
                             }
                           />
                         </label>
 
                         {/* Input Teks Utama */}
                         {/* ✅ GANTI TAG <input> KOMENTAR MENJADI <textarea> INI */}
+                        {/* --- INPUT BAR KOMENTAR --- */}
                         <textarea
                           id={`input-comment-${todo._id}`}
                           placeholder="Tulis komentar..."
@@ -1190,24 +1248,11 @@ function TodoPage() {
                               [todo._id]: e.target.value,
                             })
                           }
-                          onKeyDown={(e) => {
-                            // Logika ala WA: Enter untuk kirim, Shift+Enter untuk baris baru
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault(); // Mencegah spasi kosong saat terkirim
-                              if (
-                                commentInputs[todo._id]?.trim() ||
-                                selectedCommentImages[todo._id]
-                              ) {
-                                handleAddComment(todo._id);
-                                // Reset tinggi kotak kembali ke normal setelah ngirim
-                                e.target.style.height = "auto";
-                              }
-                            }
-                          }}
+                          // ✅ LOGIKA onKeyDown DIHAPUS TOTAL DI SINI
                           className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400 resize-none overflow-hidden custom-scrollbar max-h-32"
                           rows={1}
                           onInput={(e) => {
-                            // Sihir Auto-Resize maksimal 32px (max-h-32)
+                            // Sihir Auto-Resize tetap dipertahankan
                             e.target.style.height = "auto";
                             e.target.style.height = `${e.target.scrollHeight}px`;
                           }}
