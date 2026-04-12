@@ -49,6 +49,22 @@ const useFeed = (api) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  useEffect(() => {
+    // 1. Set interval setiap 30.000 ms (0,5 menit)
+    const interval = setInterval(() => {
+      console.log("Auto-refresh: Mengecek postingan terbaru...");
+
+      // Kita panggil fetchTodos(1) untuk mengambil data terbaru di halaman paling atas
+      // Ini tidak akan menghapus data lama yang sudah di-scroll ke bawah
+      // karena logika di setTodos kita sudah pakai penanganan duplikat (New Set)
+      fetchTodos(1);
+    }, 30000);
+
+    // 2. CLEANUP: Sangat penting untuk menghapus interval saat user pindah halaman
+    // Agar tidak terjadi memory leak atau aplikasi jadi berat
+    return () => clearInterval(interval);
+  }, [fetchTodos]);
+
   // Radar Infinite Scroll
   // --- RADAR INFINITE SCROLL (VERSI UPGRADE) ---
   useEffect(() => {
