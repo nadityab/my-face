@@ -1,0 +1,123 @@
+import React from "react";
+import { Image } from "antd"; // Pastikan Ant Design di-import
+import useAddComment from "../hooks/useAddComment";
+
+// ✅ Tambahkan currentUser sebagai props agar Avatar bisa muncul
+const CommentInputBox = ({
+  todoId,
+  api,
+  setComments,
+  fetchAllTodos,
+  currentUser,
+}) => {
+  // Panggil Sang Otak
+  const {
+    text,
+    setText,
+    image,
+    setImage,
+    isLoading,
+    handleImageChange,
+    submitComment,
+  } = useAddComment(todoId, api, setComments, fetchAllTodos);
+
+  return (
+    <div className="mt-4 flex gap-2 items-end w-full">
+      {/* Avatar User */}
+      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm mb-1">
+        {currentUser?.username?.charAt(0).toUpperCase() || "?"}
+      </div>
+
+      {/* BUBBLE ABU-ABU UTAMA */}
+      <div className="flex-1 flex flex-col bg-gray-100 rounded-2xl p-2 shadow-inner transition-all overflow-hidden">
+        {/* 1. AREA PREVIEW GAMBAR */}
+        {image && (
+          <div className="relative self-start mb-2 ml-1">
+            <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-black/5 flex items-center justify-center p-0.5">
+              <Image
+                src={URL.createObjectURL(image)} // Menggunakan state 'image' dari Hook
+                styles={{
+                  root: {
+                    display: "flex",
+                    maxHeight: "192px",
+                    maxWidth: "300px",
+                  },
+                }}
+                style={{
+                  maxHeight: "128px",
+                  maxWidth: "200px",
+                  objectFit: "contain",
+                }}
+                className="rounded-md shadow-sm cursor-pointer"
+                alt="preview"
+              />
+            </div>
+            {/* Tombol Hapus (Silang) */}
+            <button
+              onClick={() => setImage(null)} // ✅ Mengosongkan state gambar di Hook
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[11px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* 2. BARIS INPUT TEKS & ICON */}
+        <div className="flex items-center w-full">
+          {/* Icon Kamera */}
+          <label
+            htmlFor={`upload-comment-image-${todoId}`}
+            className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500 relative"
+          >
+            <span className="text-lg">📷</span>
+            <input
+              id={`upload-comment-image-${todoId}`}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </label>
+
+          {/* Input Teks Utama */}
+          <textarea
+            id={`input-comment-${todoId}`}
+            placeholder="Tulis komentar..."
+            value={text} // Dari Hook
+            onChange={(e) => setText(e.target.value)} // Dari Hook
+            className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400 resize-none overflow-hidden custom-scrollbar max-h-32"
+            rows={1}
+            onInput={(e) => {
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+          />
+
+          {/* Tombol Kirim */}
+          <button
+            onClick={submitComment} // Dari Hook
+            disabled={isLoading || (!text.trim() && !image)}
+            className="disabled:opacity-50 transition-all ml-2 shrink-0 pr-1"
+          >
+            {isLoading ? (
+              <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-5 w-5 transition-colors ${
+                  text.trim() || image ? "text-blue-600" : "text-gray-400"
+                }`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CommentInputBox;

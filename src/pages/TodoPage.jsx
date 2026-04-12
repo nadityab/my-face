@@ -8,6 +8,9 @@ import { NEWS_UPDATES } from "../constants/news-updates";
 import api, { API_URL } from "../api";
 import { Image } from "antd";
 
+import CommentInputBox from "../components/CommentInputBox"; // Sesuaikan path folder kamu
+import CreatePostBox from "../components/CreatePostBox";
+
 function TodoPage() {
   const [todos, setTodos] = useState([]);
   const [inputTask, setInputTask] = useState("");
@@ -697,126 +700,7 @@ function TodoPage() {
         </div>
 
         {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
-        <form
-          onSubmit={handleAdd}
-          className="mb-8 bg-white p-3 sm:p-4 rounded-xl shadow-sm flex flex-col gap-3 mx-2 sm:mx-0 overflow-hidden"
-        >
-          <div className="flex gap-2 items-center w-full min-w-0">
-            <div className="grow shrink min-w-0 basis-0">
-              {/* ✅ GANTI TAG <input> MENJADI <textarea> INI */}
-              <textarea
-                id="main-post-input" // <--- ✅ TAMBAHKAN ID INI
-                value={inputTask}
-                onChange={(e) => setInputTask(e.target.value)}
-                placeholder="Apa yang kamu pikirkan?"
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none overflow-hidden custom-scrollbar"
-                rows={1}
-                onInput={(e) => {
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-              />
-            </div>
-            <div className="shrink-0 flex items-center gap-1 sm:gap-2">
-              <label className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
-                {/* ✅ DITAMBAHKAN ATRIBUT 'multiple' AGAR BISA PILIH BANYAK FOTO */}
-                <input
-                  id="imageInput"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange} // 🔥 Cuma butuh 1 baris pemanggilan ini!
-                  className="hidden"
-                />
-
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </label>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`shrink-0 text-white px-4 sm:px-6 py-2 rounded-full font-bold transition-all shadow-md text-xs sm:text-sm whitespace-nowrap ${
-                  isLoading
-                    ? "bg-blue-400 cursor-not-allowed opacity-70"
-                    : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-                }`}
-              >
-                {isLoading ? "Memposting..." : "Post"}
-              </button>
-            </div>
-          </div>
-
-          {/* ✅ AREA PREVIEW HORIZONTAL (BISA DI-SCROLL KE SAMPING) */}
-          {selectedImages.length > 0 && (
-            <div className="mt-2 ml-1">
-              <p className="text-[10px] text-gray-400 mb-1.5 font-medium">
-                Terpilih: {selectedImages.length}/10 foto
-              </p>
-
-              {/* Container flex dengan overflow-x-auto untuk scroll horizontal */}
-              <div className="flex gap-3 overflow-x-auto pb-2 pt-1 px-1 custom-scrollbar snap-x">
-                {selectedImages.map((file, index) => (
-                  <div
-                    key={index}
-                    className="relative shrink-0 snap-start animate-fade-in group"
-                  >
-                    <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-gray-50 flex items-center justify-center p-1 shadow-sm h-28 w-28 transition-transform group-hover:scale-[1.02]">
-                      <Image
-                        src={URL.createObjectURL(file)}
-                        styles={{
-                          root: {
-                            display: "flex",
-                            maxHeight: "192px",
-                            maxWidth: "300px",
-                          },
-                        }}
-                        // Pakai object-cover agar preview terlihat rapi seragam kotak-kotak
-                        style={{
-                          height: "100%",
-                          width: "100%",
-                          objectFit: "cover",
-                        }}
-                        className="rounded-md cursor-pointer"
-                        alt={`preview-${index}`}
-                      />
-                    </div>
-
-                    {/* Tombol Hapus Spesifik per Foto */}
-                    <button
-                      type="button" // Wajib type="button" agar tidak memicu submit form
-                      onClick={() =>
-                        setSelectedImages(
-                          selectedImages.filter((_, i) => i !== index)
-                        )
-                      }
-                      className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </form>
+        <CreatePostBox api={api} fetchAllTodos={fetchAllTodos} />
 
         {/* --- LIST POSTINGAN (FEED) --- */}
         <div className="flex flex-col gap-6">
@@ -1193,135 +1077,14 @@ function TodoPage() {
                     ))}
                   </div>
 
-                  {/* --- INPUT BAR KOMENTAR --- */}
-                  {/* ✅ Menggunakan items-end agar Avatar tetap di bawah jika kotak abu-abu membesar ke atas */}
-                  <div className="mt-4 flex gap-2 items-end">
-                    {/* Avatar User */}
-                    <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm mb-1">
-                      {currentUser?.username?.charAt(0).toUpperCase() || "?"}
-                    </div>
-
-                    {/* ✅ BUBBLE ABU-ABU UTAMA (Diubah menjadi flex-col agar bisa menumpuk gambar & teks) */}
-                    <div className="flex-1 flex flex-col bg-gray-100 rounded-2xl p-2 shadow-inner transition-all">
-                      {/* ✅ 1. AREA PREVIEW GAMBAR (Di atas input teks) */}
-                      {selectedCommentImages[todo._id] && (
-                        <div className="relative self-start mb-2 ml-1">
-                          {/* Kotak pembungkus gambar agar rapi dan tidak tembus */}
-                          <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-black/5 flex items-center justify-center p-0.5">
-                            {/* Menggunakan tag img bawaan khusus untuk preview agar ukurannya patuh 100% */}
-                            {/* ✅ DIGANTI JADI ANT DESIGN IMAGE BIAR BISA DI-ZOOM */}
-                            <Image
-                              src={URL.createObjectURL(
-                                selectedCommentImages[todo._id]
-                              )}
-                              // wrapperStyle membatasi kotak terluar Ant Design agar tidak melar (128px = h-32)
-                              styles={{
-                                root: {
-                                  display: "flex",
-                                  maxHeight: "192px",
-                                  maxWidth: "300px",
-                                },
-                              }}
-                              // style membatasi gambar di dalamnya dan menjaga proporsi (anti gepeng)
-                              style={{
-                                maxHeight: "128px",
-                                maxWidth: "200px",
-                                objectFit: "contain",
-                              }}
-                              className="rounded-md shadow-sm cursor-pointer"
-                              alt="preview"
-                            />
-                          </div>
-                          {/* Tombol Hapus (Silang) */}
-                          <button
-                            onClick={() =>
-                              setSelectedCommentImages({
-                                ...selectedCommentImages,
-                                [todo._id]: null,
-                              })
-                            }
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[11px] font-bold flex items-center justify-center shadow-md hover:bg-red-600 z-20 transition-transform hover:scale-110"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      )}
-
-                      {/* ✅ 2. BARIS INPUT TEKS & ICON (Di bawah preview) */}
-                      <div className="flex items-center w-full">
-                        {/* Icon Kamera (Selalu Muncul di sebelah kiri) */}
-                        {/* Icon Kamera (Selalu Muncul di sebelah kiri) */}
-                        <label
-                          htmlFor={`upload-comment-image-${todo._id}`} // ✅ Tambahkan htmlFor agar label dan input terhubung sempurna
-                          className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500"
-                        >
-                          <span className="text-lg">📷</span>
-                          <input
-                            id={`upload-comment-image-${todo._id}`} // ✅ ID disamakan dengan htmlFor
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            // ✅ PANGGIL FUNGSI CLEAN ARCHITECTURE DI SINI
-                            onChange={(e) =>
-                              handleCommentImageChange(e, todo._id)
-                            }
-                          />
-                        </label>
-
-                        {/* Input Teks Utama */}
-                        {/* ✅ GANTI TAG <input> KOMENTAR MENJADI <textarea> INI */}
-                        {/* --- INPUT BAR KOMENTAR --- */}
-                        <textarea
-                          id={`input-comment-${todo._id}`}
-                          placeholder="Tulis komentar..."
-                          value={commentInputs[todo._id] || ""}
-                          onChange={(e) =>
-                            setCommentInputs({
-                              ...commentInputs,
-                              [todo._id]: e.target.value,
-                            })
-                          }
-                          // ✅ LOGIKA onKeyDown DIHAPUS TOTAL DI SINI
-                          className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400 resize-none overflow-hidden custom-scrollbar max-h-32"
-                          rows={1}
-                          onInput={(e) => {
-                            // Sihir Auto-Resize tetap dipertahankan
-                            e.target.style.height = "auto";
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                          }}
-                        />
-
-                        {/* Tombol Kirim */}
-                        <button
-                          onClick={() => handleAddComment(todo._id)}
-                          disabled={
-                            isCommentLoading[todo._id] ||
-                            (!commentInputs[todo._id]?.trim() &&
-                              !selectedCommentImages[todo._id])
-                          }
-                          className="disabled:opacity-50 transition-all ml-2 shrink-0 pr-1"
-                        >
-                          {isCommentLoading[todo._id] ? (
-                            <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                          ) : (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className={`h-5 w-5 transition-colors ${
-                                commentInputs[todo._id]?.trim() ||
-                                selectedCommentImages[todo._id]
-                                  ? "text-blue-600"
-                                  : "text-gray-400"
-                              }`}
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  {/* --- INPUT BAR KOMENTAR (Sudah Clean Architecture & Full UI) --- */}
+                  <CommentInputBox
+                    todoId={todo._id}
+                    api={api}
+                    setComments={setComments}
+                    fetchAllTodos={fetchAllTodos}
+                    currentUser={currentUser} // ✅ Tambahkan ini agar Avatar tidak error/kosong
+                  />
                 </div>
               </div>
             );
