@@ -197,6 +197,10 @@ function TodoPage() {
       setInputTask("");
       setSelectedImages([]);
       fetchAllTodos();
+
+      // ✅ TAMBAHKAN BARIS INI UNTUK MENGKEMPESKAN KOTAK TEKS
+      const postInput = document.getElementById("main-post-input");
+      if (postInput) postInput.style.height = "auto";
     } catch (error) {
       console.error("Error menambah todo:", error);
       // Error 401 (Expired) sudah otomatis melempar user ke /login berkat Interceptor Response!
@@ -606,12 +610,18 @@ function TodoPage() {
         >
           <div className="flex gap-2 items-center w-full min-w-0">
             <div className="grow shrink min-w-0 basis-0">
-              <input
-                type="text"
+              {/* ✅ GANTI TAG <input> MENJADI <textarea> INI */}
+              <textarea
+                id="main-post-input" // <--- ✅ TAMBAHKAN ID INI
                 value={inputTask}
                 onChange={(e) => setInputTask(e.target.value)}
                 placeholder="Apa yang kamu pikirkan?"
-                className="w-full bg-gray-50 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm truncate"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none overflow-hidden custom-scrollbar"
+                rows={1}
+                onInput={(e) => {
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
               />
             </div>
             <div className="shrink-0 flex items-center gap-1 sm:gap-2">
@@ -810,7 +820,7 @@ function TodoPage() {
 
                 {/* --- BODY POST --- */}
                 <div className="px-4 py-3 border-t border-gray-50">
-                  <p className="text-base leading-relaxed text-gray-800 mb-3">
+                  <p className="text-base leading-relaxed text-gray-800 mb-3 whitespace-pre-wrap">
                     {todo.task}
                   </p>
 
@@ -1040,7 +1050,7 @@ function TodoPage() {
                               </span>
                             </div>
 
-                            <p className="text-[13px] mt-0.5 text-gray-800 leading-snug">
+                            <p className="text-[13px] mt-0.5 text-gray-800 leading-snug whitespace-pre-wrap">
                               {comment.content}
                             </p>
 
@@ -1169,9 +1179,9 @@ function TodoPage() {
                         </label>
 
                         {/* Input Teks Utama */}
-                        <input
+                        {/* ✅ GANTI TAG <input> KOMENTAR MENJADI <textarea> INI */}
+                        <textarea
                           id={`input-comment-${todo._id}`}
-                          type="text"
                           placeholder="Tulis komentar..."
                           value={commentInputs[todo._id] || ""}
                           onChange={(e) =>
@@ -1180,10 +1190,27 @@ function TodoPage() {
                               [todo._id]: e.target.value,
                             })
                           }
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleAddComment(todo._id)
-                          }
-                          className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400"
+                          onKeyDown={(e) => {
+                            // Logika ala WA: Enter untuk kirim, Shift+Enter untuk baris baru
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault(); // Mencegah spasi kosong saat terkirim
+                              if (
+                                commentInputs[todo._id]?.trim() ||
+                                selectedCommentImages[todo._id]
+                              ) {
+                                handleAddComment(todo._id);
+                                // Reset tinggi kotak kembali ke normal setelah ngirim
+                                e.target.style.height = "auto";
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400 resize-none overflow-hidden custom-scrollbar max-h-32"
+                          rows={1}
+                          onInput={(e) => {
+                            // Sihir Auto-Resize maksimal 32px (max-h-32)
+                            e.target.style.height = "auto";
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                          }}
                         />
 
                         {/* Tombol Kirim */}
