@@ -40,7 +40,7 @@ const useCreatePost = (api, fetchAllTodos) => {
 
     // Looping untuk memasukkan semua gambar ke FormData
     images.forEach((image) => {
-      formData.append("image", image); // Sesuaikan nama field dengan multer backend
+      formData.append("images", image); // Sesuaikan nama field dengan multer backend
     });
 
     try {
