@@ -711,7 +711,7 @@ function TodoPage() {
         </div>
 
         {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
-        <CreatePostBox api={api} fetchAllTodos={fetchAllTodos} />
+        <CreatePostBox api={api} refreshFeed={refreshFeed} />
 
         {/* --- LIST POSTINGAN (FEED) --- */}
         <div className="flex flex-col gap-6">
