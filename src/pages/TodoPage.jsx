@@ -10,6 +10,9 @@ import { Image } from "antd";
 
 import CommentInputBox from "../components/CommentInputBox"; // Sesuaikan path folder kamu
 import CreatePostBox from "../components/CreatePostBox";
+import ChatWidget from "../components/chat/ChatWidget";
+import ChatWindow from "../components/chat/ChatWindow";
+// ... (state selectedUser dan lainnya tetap sama)
 
 import useFeed from "../hooks/useFeed";
 import PostCard from "../components/PostCard";
@@ -58,6 +61,9 @@ function TodoPage() {
   const [activeCommentBox, setActiveCommentBox] = useState(null);
   // State untuk teks input komentar per postingan { todoId: "teks" }
   const [commentInputs, setCommentInputs] = useState({});
+
+  // ✅ TAMBAHKAN INI: State untuk mengontrol jendela chat
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const navigate = useNavigate();
 
@@ -513,10 +519,11 @@ function TodoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 font-sans">
-      <div className="max-w-xl mx-auto px-4">
-        {/* --- FLOATING BUTTON WHAT'S NEW --- */}
-        {/* <button
+    <>
+      <div className="min-h-screen bg-gray-100 py-10 font-sans">
+        <div className="max-w-xl mx-auto px-4">
+          {/* --- FLOATING BUTTON WHAT'S NEW --- */}
+          {/* <button
           onClick={() => setIsDrawerOpen(true)}
           className="fixed bottom-6 left-6 z-40 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-blue-100 text-blue-600 px-5 py-3 rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all group"
         >
@@ -531,299 +538,308 @@ function TodoPage() {
         </button>
 
         {/* --- OVERLAY --- */}
-        {isDrawerOpen && (
+          {isDrawerOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 z-50 transition-opacity duration-300 animate-in fade-in"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setShowNews(false);
+              }}
+            ></div>
+          )}
+
+          {/* --- DRAWER PANEL --- */}
           <div
-            className="fixed inset-0 bg-black/30 z-50 transition-opacity duration-300 animate-in fade-in"
-            onClick={() => {
-              setIsDrawerOpen(false);
-              setShowNews(false);
-            }}
-          ></div>
-        )}
-
-        {/* --- DRAWER PANEL --- */}
-        <div
-          className={`fixed top-0 left-0 w-80 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col h-dvh ${
-            isDrawerOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="p-5 flex flex-col h-full">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                {showNews ? "🚀 What's New" : "Menu Utama"}
-              </h2>
-              <button
-                onClick={() => {
-                  setIsDrawerOpen(false);
-                  setShowNews(false);
-                }}
-                className="text-gray-500 hover:text-red-500 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-
-            {!showNews ? (
-              <div className="flex-1 px-4">
+            className={`fixed top-0 left-0 w-80 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col h-dvh ${
+              isDrawerOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="p-5 flex flex-col h-full">
+              <div className="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  {showNews ? "🚀 What's New" : "Menu Utama"}
+                </h2>
                 <button
-                  onClick={() => setShowNews(true)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-blue-50 rounded-xl transition-colors group"
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    setShowNews(false);
+                  }}
+                  className="text-gray-500 hover:text-red-500 text-2xl"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                      ✨
-                    </span>
-                    <span className="font-semibold text-gray-700">
-                      What's New
-                    </span>
-                  </div>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  &times;
                 </button>
               </div>
-            ) : (
-              <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="px-6 py-2">
+
+              {!showNews ? (
+                <div className="flex-1 px-4">
                   <button
-                    onClick={() => setShowNews(false)}
-                    className="text-blue-600 text-sm font-bold flex items-center gap-1 hover:text-blue-800 transition-colors py-2"
+                    onClick={() => setShowNews(true)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-blue-50 rounded-xl transition-colors group"
                   >
-                    ← Kembali ke Menu
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                        ✨
+                      </span>
+                      <span className="font-semibold text-gray-700">
+                        What's New
+                      </span>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
                   </button>
                 </div>
+              ) : (
+                <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="px-6 py-2">
+                    <button
+                      onClick={() => setShowNews(false)}
+                      className="text-blue-600 text-sm font-bold flex items-center gap-1 hover:text-blue-800 transition-colors py-2"
+                    >
+                      ← Kembali ke Menu
+                    </button>
+                  </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 pl-6 space-y-6 touch-pan-y overscroll-contain custom-scrollbar">
-                  {/* ✅ KODINGAN MAPPING YANG SUDAH BERSIH DAN DINAMIS */}
-                  {displayedUpdates.map((update) => {
-                    // Mapping warna agar rapi dan best practice
-                    const colorMap = {
-                      blue: "bg-blue-50 text-blue-600",
-                      indigo: "bg-indigo-50 text-indigo-600",
-                      purple: "bg-purple-50 text-purple-600",
-                      green: "bg-green-50 text-green-600",
-                    };
-                    const badgeColor =
-                      colorMap[update.color] || "bg-gray-100 text-gray-500";
+                  <div className="flex-1 overflow-y-auto pr-2 pl-6 space-y-6 touch-pan-y overscroll-contain custom-scrollbar">
+                    {/* ✅ KODINGAN MAPPING YANG SUDAH BERSIH DAN DINAMIS */}
+                    {displayedUpdates.map((update) => {
+                      // Mapping warna agar rapi dan best practice
+                      const colorMap = {
+                        blue: "bg-blue-50 text-blue-600",
+                        indigo: "bg-indigo-50 text-indigo-600",
+                        purple: "bg-purple-50 text-purple-600",
+                        green: "bg-green-50 text-green-600",
+                      };
+                      const badgeColor =
+                        colorMap[update.color] || "bg-gray-100 text-gray-500";
 
-                    return (
-                      <section
-                        key={update.version}
-                        className="relative pl-8 border-l-2 border-gray-100 last:border-l-transparent pb-4"
-                      >
-                        <span
-                          className={`absolute -left-2.25 top-1 h-4 w-4 rounded-full border-4 border-white shadow-sm ${
-                            update.version === NEWS_UPDATES[0].version
-                              ? "bg-blue-500"
-                              : "bg-gray-300"
-                          }`}
-                        ></span>
-                        <div className="mb-1">
+                      return (
+                        <section
+                          key={update.version}
+                          className="relative pl-8 border-l-2 border-gray-100 last:border-l-transparent pb-4"
+                        >
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${badgeColor}`}
-                          >
-                            {update.version} • {update.date}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-gray-800 text-sm">
-                          {update.title}
-                        </h3>
-                        <ul className="text-xs text-gray-500 list-disc ml-4 mt-2 space-y-2">
-                          {update.points.map((point, pIdx) => (
-                            <li key={pIdx} className="leading-relaxed">
-                              {point}
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    );
-                  })}
+                            className={`absolute -left-2.25 top-1 h-4 w-4 rounded-full border-4 border-white shadow-sm ${
+                              update.version === NEWS_UPDATES[0].version
+                                ? "bg-blue-500"
+                                : "bg-gray-300"
+                            }`}
+                          ></span>
+                          <div className="mb-1">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${badgeColor}`}
+                            >
+                              {update.version} • {update.date}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-gray-800 text-sm">
+                            {update.title}
+                          </h3>
+                          <ul className="text-xs text-gray-500 list-disc ml-4 mt-2 space-y-2">
+                            {update.points.map((point, pIdx) => (
+                              <li key={pIdx} className="leading-relaxed">
+                                {point}
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      );
+                    })}
 
-                  {/* ✅ TOMBOL SHOW MORE / SHOW LESS */}
-                  {NEWS_UPDATES.length > 3 && (
-                    <div className="pt-2 pb-4 flex justify-center">
-                      <button
-                        onClick={() => setShowAllVersions(!showAllVersions)}
-                        className="text-xs font-semibold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1 px-4 py-2 bg-gray-50 rounded-full hover:bg-blue-50"
-                      >
-                        {showAllVersions
-                          ? "Sembunyikan Versi Lama 🔼"
-                          : "Lihat Versi Sebelumnya 🔽"}
-                      </button>
-                    </div>
-                  )}
+                    {/* ✅ TOMBOL SHOW MORE / SHOW LESS */}
+                    {NEWS_UPDATES.length > 3 && (
+                      <div className="pt-2 pb-4 flex justify-center">
+                        <button
+                          onClick={() => setShowAllVersions(!showAllVersions)}
+                          className="text-xs font-semibold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1 px-4 py-2 bg-gray-50 rounded-full hover:bg-blue-50"
+                        >
+                          {showAllVersions
+                            ? "Sembunyikan Versi Lama 🔼"
+                            : "Lihat Versi Sebelumnya 🔽"}
+                        </button>
+                      </div>
+                    )}
 
-                  <div className="h-24" />
+                    <div className="h-24" />
+                  </div>
                 </div>
+              )}
+              <div className="mt-auto pt-4 border-t text-center text-xs text-gray-400">
+                Build with ❤️ and Fun!
               </div>
-            )}
-            <div className="mt-auto pt-4 border-t text-center text-xs text-gray-400">
-              Build with ❤️ and Fun!
             </div>
           </div>
-        </div>
 
-        {/* --- HEADER UTAMA --- */}
-        <div className="sticky top-0 z-30 flex justify-between items-center mb-8 bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-xl shadow-sm border-b border-gray-100 mx-2 sm:mx-0 overflow-hidden">
-          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
-            <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {/* --- HEADER UTAMA --- */}
+          <div className="sticky top-0 z-30 flex justify-between items-center mb-8 bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-xl shadow-sm border-b border-gray-100 mx-2 sm:mx-0 overflow-hidden">
+            <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 flex-1">
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors group"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-            <h2 className="text-sm xs:text-base md:text-2xl font-bold text-gray-800 tracking-tight truncate min-w-0 select-none">
-              MyFace <span className="text-blue-600">is Fun</span>
-            </h2>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+              <h2 className="text-sm xs:text-base md:text-2xl font-bold text-gray-800 tracking-tight truncate min-w-0 select-none">
+                MyFace <span className="text-blue-600">is Fun</span>
+              </h2>
+            </div>
+            <div className="shrink-0 ml-2">
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg text-[10px] xs:text-xs md:text-sm font-semibold transition-all active:scale-95 shadow-sm whitespace-nowrap"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-          <div className="shrink-0 ml-2">
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg text-[10px] xs:text-xs md:text-sm font-semibold transition-all active:scale-95 shadow-sm whitespace-nowrap"
-            >
-              Logout
-            </button>
+
+          {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
+          <CreatePostBox api={api} refreshFeed={refreshFeed} />
+
+          {/* --- LIST POSTINGAN (FEED) --- */}
+          <div className="flex flex-col gap-6">
+            {todos.map((todo) => (
+              <PostCard
+                key={todo._id}
+                todo={todo}
+                currentUser={currentUser}
+                api={api}
+                comments={comments}
+                setComments={setComments}
+                activeCommentBox={activeCommentBox}
+                setActiveCommentBox={setActiveCommentBox}
+                openMenuId={openMenuId}
+                setOpenMenuId={setOpenMenuId}
+                formatTimestamp={formatTimestamp}
+                handleLike={handleLike}
+                handleShare={handleShare}
+                startEdit={startEdit}
+                handleDelete={handleDelete}
+                handleLikeComment={handleLikeComment}
+                handleDeleteComment={handleDeleteComment}
+                refreshFeed={refreshFeed}
+              />
+            ))}
           </div>
-        </div>
+          <ChatWidget onSelectUser={(user) => setSelectedUser(user)} />
 
-        {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
-        <CreatePostBox api={api} refreshFeed={refreshFeed} />
-
-        {/* --- LIST POSTINGAN (FEED) --- */}
-        <div className="flex flex-col gap-6">
-          {todos.map((todo) => (
-            <PostCard
-              key={todo._id}
-              todo={todo}
-              currentUser={currentUser}
-              api={api}
-              comments={comments}
-              setComments={setComments}
-              activeCommentBox={activeCommentBox}
-              setActiveCommentBox={setActiveCommentBox}
-              openMenuId={openMenuId}
-              setOpenMenuId={setOpenMenuId}
-              formatTimestamp={formatTimestamp}
-              handleLike={handleLike}
-              handleShare={handleShare}
-              startEdit={startEdit}
-              handleDelete={handleDelete}
-              handleLikeComment={handleLikeComment}
-              handleDeleteComment={handleDeleteComment}
-              refreshFeed={refreshFeed}
+          {/* Jendela Chat Aktif */}
+          {selectedUser && (
+            <ChatWindow
+              selectedUser={selectedUser}
+              onClose={() => setSelectedUser(null)}
             />
-          ))}
+          )}
+          {/* --- PAGINASI POSTINGAN (FEED) --- */}
+          {todos.length > 0 && (
+            <div
+              ref={observerTarget}
+              className="w-full flex justify-center items-center py-6 pb-24"
+            >
+              {isFetchingMore ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs text-gray-500 font-medium">
+                    Memuat postingan lama...
+                  </span>
+                </div>
+              ) : !hasMore ? (
+                <div className="text-center py-4 bg-gray-50 w-full rounded-xl">
+                  <p className="text-sm text-gray-500 font-medium">
+                    ✨ Yay! Kamu sudah melihat semua postingan.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
 
-        {/* --- PAGINASI POSTINGAN (FEED) --- */}
-        {todos.length > 0 && (
-          <div
-            ref={observerTarget}
-            className="w-full flex justify-center items-center py-6 pb-24"
-          >
-            {isFetchingMore ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs text-gray-500 font-medium">
-                  Memuat postingan lama...
-                </span>
+        {/* --- MODAL POPUP EDIT --- */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="px-6 py-4 border-b flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-800">
+                  Edit Postingan
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditImage(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
               </div>
-            ) : !hasMore ? (
-              <div className="text-center py-4 bg-gray-50 w-full rounded-xl">
-                <p className="text-sm text-gray-500 font-medium">
-                  ✨ Yay! Kamu sudah melihat semua postingan.
-                </p>
+              <div className="p-6 flex flex-col gap-4">
+                <textarea
+                  className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 h-28"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+                <label className="flex-1 flex flex-col items-center justify-center px-4 py-4 bg-gray-50 text-blue-600 rounded-xl border-2 border-dashed cursor-pointer">
+                  <span className="text-xs font-semibold">
+                    {editImage ? editImage.name : "Klik untuk ganti foto"}
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => setEditImage(e.target.files[0])}
+                  />
+                </label>
               </div>
-            ) : null}
+              <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button
+                  onClick={() => handleUpdateText(selectedTodo._id)}
+                  disabled={isLoading} // 3. Cegah klik ganda
+                  className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${
+                    isLoading
+                      ? "bg-blue-400 cursor-not-allowed opacity-70"
+                      : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                  }`}
+                >
+                  {/* 4. Ubah teks saat loading */}
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Menyimpan...
+                    </div>
+                  ) : (
+                    "Simpan Perubahan"
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* --- MODAL POPUP EDIT --- */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-800">
-                Edit Postingan
-              </h3>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditImage(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 flex flex-col gap-4">
-              <textarea
-                className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 h-28"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-              <label className="flex-1 flex flex-col items-center justify-center px-4 py-4 bg-gray-50 text-blue-600 rounded-xl border-2 border-dashed cursor-pointer">
-                <span className="text-xs font-semibold">
-                  {editImage ? editImage.name : "Klik untuk ganti foto"}
-                </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => setEditImage(e.target.files[0])}
-                />
-              </label>
-            </div>
-            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
-              <button
-                onClick={() => handleUpdateText(selectedTodo._id)}
-                disabled={isLoading} // 3. Cegah klik ganda
-                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${
-                  isLoading
-                    ? "bg-blue-400 cursor-not-allowed opacity-70"
-                    : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-                }`}
-              >
-                {/* 4. Ubah teks saat loading */}
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    Menyimpan...
-                  </div>
-                ) : (
-                  "Simpan Perubahan"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 

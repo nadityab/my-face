@@ -28,24 +28,32 @@ const LoginPage = () => {
 
     try {
       const endpoint = isRegister ? "/auth/register" : "/auth/login";
-      const res = await api.post(endpoint, {
-        username,
-        password,
-      });
+      const res = await api.post(endpoint, { username, password });
 
       if (!isRegister) {
-        // ✅ HANYA SIMPAN ACCESS TOKEN
+        // ✅ 1. Simpan data ke LocalStorage
         localStorage.setItem("token", res.data.token);
-
-        // ✅ Opsional: Simpan username agar bisa dipakai di UI lain tanpa decode ulang
         localStorage.setItem("username", username);
 
-        // Gunakan replace agar user tidak bisa tekan 'back' kembali ke login
-        window.location.href = "/home";
+        // ✅ 2. DEFENSIVE CHECK: Pastikan data user ada sebelum diakses
+        // Ini sering bikin gagal redirect kalau res.data.user-nya undefined
+        if (res.data.user && res.data.user._id) {
+          localStorage.setItem("userId", res.data.user._id);
+        } else if (res.data.userId) {
+          // Jaga-jaga kalau backend ngirim field 'userId' bukan 'user._id'
+          localStorage.setItem("userId", res.data.userId);
+        }
+
+        // ✅ 3. BEST PRACTICE REDIRECT
+        // Pakai navigate() bukan window.location.href
+        navigate("/home");
+
+        // Opsional: Jika App.jsx kamu kaku, gunakan reload tipis saja
+        window.location.reload();
       } else {
         alert("Registrasi Berhasil! Silakan masuk.");
         setIsRegister(false);
-        setPassword(""); // Reset password untuk keamanan
+        setPassword("");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memproses permintaan");
