@@ -28,36 +28,50 @@ const LoginPage = () => {
 
     try {
       const endpoint = isRegister ? "/auth/register" : "/auth/login";
+
+      // Kirim data ke backend
       const res = await api.post(endpoint, { username, password });
 
       if (!isRegister) {
-        // ✅ 1. Simpan data ke LocalStorage
+        // --- MODE LOGIN ---
+
+        // ✅ 1. Simpan Access Token (Wajib buat auth)
         localStorage.setItem("token", res.data.token);
+
+        // ✅ 2. Simpan Username (Buat pajangan di UI)
         localStorage.setItem("username", username);
 
-        // ✅ 2. DEFENSIVE CHECK: Pastikan data user ada sebelum diakses
-        // Ini sering bikin gagal redirect kalau res.data.user-nya undefined
+        // ✅ 3. DEFENSIVE CHECK: Simpan User ID (Wajib buat Chat/Socket)
+        // Sesuai dengan backend kita yang baru: res.data.user._id
         if (res.data.user && res.data.user._id) {
           localStorage.setItem("userId", res.data.user._id);
         } else if (res.data.userId) {
-          // Jaga-jaga kalau backend ngirim field 'userId' bukan 'user._id'
+          // Fallback jika backend mengirim field berbeda
           localStorage.setItem("userId", res.data.userId);
         }
 
-        // ✅ 3. BEST PRACTICE REDIRECT
-        // Pakai navigate() bukan window.location.href
+        // ✅ 4. BEST PRACTICE REDIRECT
+        // Kita pakai navigate agar perpindahan halaman mulus (SPA)
         navigate("/home");
 
-        // Opsional: Jika App.jsx kamu kaku, gunakan reload tipis saja
+        // ✅ 5. FORCE REFRESH (Opsional tapi PENTING saat ini)
+        // Ini memastikan SocketProvider di App.jsx membaca ulang
+        // localStorage yang baru saja kita isi dengan userId yang benar.
         window.location.reload();
       } else {
+        // --- MODE REGISTER ---
+
         alert("Registrasi Berhasil! Silakan masuk.");
-        setIsRegister(false);
-        setPassword("");
+        setIsRegister(false); // Pindah ke tampilan login
+        setPassword(""); // Clear password untuk keamanan
+        // Untuk register, kita tidak pindah halaman otomatis
+        // agar user bisa login manual (menjaga keamanan alur token).
       }
     } catch (err) {
+      // Menangkap error dari backend atau koneksi
       setError(err.response?.data?.message || "Gagal memproses permintaan");
     } finally {
+      // Mematikan loading spinner apapun hasilnya
       setLoading(false);
     }
   };

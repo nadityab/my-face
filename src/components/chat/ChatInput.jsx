@@ -7,6 +7,8 @@ const ChatInput = ({ selectedUser }) => {
   const { socket } = useSocket();
   const currentUserId = localStorage.getItem("userId");
 
+  // src/components/Chat/ChatInput.jsx
+
   const handleSend = () => {
     if (!text.trim() || !socket) return;
 
@@ -14,6 +16,8 @@ const ChatInput = ({ selectedUser }) => {
       sender: currentUserId,
       receiver: selectedUser._id,
       message: text,
+      // ✅ TAMBAHKAN INI: Kasih tanggal sekarang
+      timestamp: new Date().toISOString(),
     };
 
     socket.emit("send_message", chatData);

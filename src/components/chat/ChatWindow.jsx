@@ -1,92 +1,116 @@
-// src/components/Chat/ChatWindow.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useSocket } from "../../context/SocketContext";
 import axios from "axios";
-
+import { API_URL } from "../../api";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-
-import { API_URL } from "../../api";
-
-const SOCKET_URL = API_URL;
-
-const currentUserId = localStorage.getItem("userId");
+import { FaArrowDown } from "react-icons/fa"; // ✅ Icon sudah siap tempur
 
 const ChatWindow = ({ selectedUser, onClose }) => {
   const [messages, setMessages] = useState([]);
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+
   const { socket } = useSocket();
   const currentUserId = localStorage.getItem("userId");
-  const baseURL = SOCKET_URL || "http://localhost:3000";
+  const scrollContainerRef = useRef(null);
 
-  // 1. Ambil Riwayat Chat (History)
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await axios.get(
-          `${baseURL}/chat/history/${currentUserId}/${selectedUser._id}`
-        );
-        setMessages(res.data);
-      } catch (err) {
-        console.error("Gagal ambil riwayat chat", err);
+  // 1. Fungsi ambil data History (Pagination 10-10)
+  const fetchHistory = async (isInitial = false) => {
+    if (loading || (!hasMore && !isInitial)) return;
+
+    const container = scrollContainerRef.current;
+    // 📸 Snapshot tinggi sebelum render data baru
+    const oldScrollHeight = container?.scrollHeight || 0;
+
+    setLoading(true);
+    try {
+      const currentSkip = isInitial ? 0 : skip;
+      // ✅ URL FIXED: Menggunakan path param & query param yang benar
+      const res = await axios.get(
+        `${API_URL}/chat/history/${currentUserId}/${selectedUser._id}?limit=10&skip=${currentSkip}`
+      );
+
+      const newMessages = res.data;
+
+      if (isInitial) {
+        setMessages(newMessages);
+        setSkip(10);
+      } else {
+        setMessages((prev) => [...newMessages, ...prev]);
+        setSkip((prev) => prev + 10);
+
+        // 🛠 TRICK SAKTI: Menahan posisi scroll agar tidak loncat ke atas
+        requestAnimationFrame(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - oldScrollHeight;
+          }
+        });
       }
-    };
 
+      if (newMessages.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error("Gagal narik history:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Initial Load saat ganti user
+  useEffect(() => {
     if (selectedUser) {
-      fetchHistory();
-      // Bergabung ke room private
+      setMessages([]);
+      setHasMore(true);
+      fetchHistory(true);
       socket?.emit("join_chat", {
         senderId: currentUserId,
         receiverId: selectedUser._id,
       });
     }
-  }, [selectedUser, socket]);
+  }, [selectedUser]);
 
-  // 2. Dengerin Pesan Masuk (Real-time)
-  useEffect(() => {
-    if (!socket) return;
+  // 3. Deteksi posisi Scroll
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
 
-    socket.on("receive_message", (newMessage) => {
-      // Hanya tambahkan pesan jika itu dari orang yang sedang kita ajak chat
-      if (
-        newMessage.sender === selectedUser._id ||
-        newMessage.sender === currentUserId
-      ) {
-        setMessages((prev) => [...prev, newMessage]);
-      }
-    });
-
-    return () => socket.off("receive_message");
-  }, [socket, selectedUser]);
-
-  useEffect(() => {
-    // Tambahkan pengecekan string "null" (sering kejadian di JS)
-    const isIdValid =
-      currentUserId &&
-      currentUserId !== "null" &&
-      currentUserId !== "undefined";
-
-    if (!isIdValid || !selectedUser?._id) {
-      console.warn("Koneksi ditunda: ID pengirim atau penerima tidak valid.");
-      return; // Berhenti di sini, jangan lanjut fetchHistory
+    // A. Tarik pesan lama jika mentok atas
+    if (scrollTop === 0 && hasMore && !loading) {
+      fetchHistory();
     }
 
-    const fetchHistory = async () => {
-      try {
-        const res = await axios.get(
-          `${baseURL}/chat/history/${currentUserId}/${selectedUser._id}`
-        );
-        setMessages(res.data);
-      } catch (err) {
-        console.error("Gagal ambil history:", err);
+    // B. Munculkan tombol panah jika user "naik" ke atas (> 200px dari bawah)
+    const isBottom = scrollHeight - scrollTop - clientHeight < 200;
+    setShowScrollBtn(!isBottom);
+  };
+
+  const scrollToBottom = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // 4. Socket listener untuk pesan baru
+  useEffect(() => {
+    if (!socket) return;
+    const handleReceive = (msg) => {
+      if (
+        (msg.sender === selectedUser._id && msg.receiver === currentUserId) ||
+        (msg.sender === currentUserId && msg.receiver === selectedUser._id)
+      ) {
+        setMessages((prev) => [...prev, msg]);
+        setSkip((prev) => prev + 1);
       }
     };
 
-    fetchHistory();
-    socket?.emit("join_chat", {
-      senderId: currentUserId,
-      receiverId: selectedUser._id,
-    });
-  }, [selectedUser, socket, currentUserId]);
+    socket.on("receive_message", handleReceive);
+    return () => socket.off("receive_message", handleReceive);
+  }, [socket, selectedUser, currentUserId]);
 
   return (
     <div className="fixed bottom-24 right-6 z-50 w-80 h-112.5 bg-white shadow-2xl rounded-2xl border border-blue-100 flex flex-col overflow-hidden animate-slide-in">
@@ -94,7 +118,10 @@ const ChatWindow = ({ selectedUser, onClose }) => {
       <div className="p-3 bg-blue-600 text-white flex justify-between items-center shadow-md">
         <div className="flex items-center gap-2">
           <img
-            src={selectedUser.profilePic}
+            src={
+              selectedUser.profilePic ||
+              `https://ui-avatars.com/api/?name=${selectedUser.username}`
+            }
             className="w-8 h-8 rounded-full border border-white/50"
             alt=""
           />
@@ -107,10 +134,34 @@ const ChatWindow = ({ selectedUser, onClose }) => {
         </button>
       </div>
 
-      {/* List Pesan */}
-      <ChatMessages messages={messages} currentUserId={currentUserId} />
+      {/* Area Chat */}
+      <div className="relative flex-1 overflow-hidden flex flex-col">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          style={{ overflowAnchor: "auto" }}
+          className="flex-1 overflow-y-auto bg-gray-50 custom-scrollbar"
+        >
+          {loading && (
+            <div className="text-[10px] text-center text-blue-400 py-2">
+              Memuat pesan lama...
+            </div>
+          )}
+          <ChatMessages messages={messages} currentUserId={currentUserId} />
+        </div>
 
-      {/* Input */}
+        {/* 🔘 Tombol Panah Bawah - Pakai FaArrowDown */}
+        {showScrollBtn && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white p-2.5 rounded-full shadow-lg hover:bg-blue-700 transition-all animate-bounce flex items-center justify-center border border-white/20 z-10"
+            title="Scroll ke bawah"
+          >
+            <FaArrowDown size={14} />
+          </button>
+        )}
+      </div>
+
       <ChatInput selectedUser={selectedUser} />
     </div>
   );

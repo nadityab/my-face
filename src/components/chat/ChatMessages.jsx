@@ -1,20 +1,31 @@
+// src/components/Chat/ChatMessages.jsx
 import React, { useEffect, useRef } from "react";
 
 const ChatMessages = ({ messages, currentUserId }) => {
   const scrollRef = useRef();
+  const lastMessageIdRef = useRef(null);
 
-  // Auto scroll ke pesan paling bawah setiap ada pesan baru
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+
+    // 💡 HANYA AUTO-SCROLL SAAT PERTAMA KALI BUKA CHAT
+    if (!lastMessageIdRef.current) {
+      scrollRef.current?.scrollIntoView({ behavior: "auto" });
+    }
+
+    // Logika auto-scroll untuk pesan baru dihapus sesuai permintaanmu.
+    // User sekarang punya kendali penuh.
+
+    lastMessageIdRef.current = messages[messages.length - 1]?._id;
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 custom-scrollbar">
+    <div className="p-4 space-y-3">
       {messages.map((msg, index) => {
         const isMe = msg.sender === currentUserId;
         return (
           <div
-            key={index}
+            key={msg._id || index}
             className={`flex ${isMe ? "justify-end" : "justify-start"}`}
           >
             <div
@@ -24,22 +35,23 @@ const ChatMessages = ({ messages, currentUserId }) => {
                   : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
               }`}
             >
-              <p>{msg.message}</p>
+              <p className="wrap-break-word leading-relaxed">{msg.message}</p>
               <span
                 className={`text-[9px] block mt-1 opacity-70 ${
                   isMe ? "text-right" : "text-left"
                 }`}
               >
-                {new Date(msg.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {msg.timestamp
+                  ? new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "--:--"}
               </span>
             </div>
           </div>
         );
       })}
-      {/* Element pancingan buat scroll */}
       <div ref={scrollRef} />
     </div>
   );
