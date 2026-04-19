@@ -83,24 +83,74 @@ function TodoPage() {
 
   // 1. PINTU UTAMA: Validasi Sesi & Auto Renewal
   useEffect(() => {
-    const initApp = async () => {
+    let isMounted = true;
+    let intervalId = null;
+
+    const checkSession = async (isInitialCall = false) => {
       const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
+      const storedUserId = localStorage.getItem("userId");
+      const currentPath = window.location.pathname;
+
+      if (currentPath === "/login") {
+        if (isInitialCall) setIsLoading(false);
+        return;
+      }
+
+      const logoutUser = (message) => {
+        if (isMounted) {
+          alert(message); // Memberi tahu user alasan logout
+          localStorage.clear();
+          window.location.href = "/login";
+        }
+      };
+
+      // 🛡️ GUARD 2: Kalau token/ID gak ada
+      if (!token || !storedUserId) {
+        if (currentPath !== "/login") {
+          logoutUser(
+            "Sesi tidak ditemukan atau tidak valid, mohon login kembali."
+          );
+        }
         return;
       }
 
       try {
         const res = await api.get("/auth/me");
-        // SIMPAN DATA USER (Termasuk _id)
-        setCurrentUser(res.data.user);
 
-        fetchAllTodos();
+        if (isMounted) {
+          if (res.data.user) {
+            setCurrentUser(res.data.user);
+            localStorage.setItem("userId", res.data.user._id);
+
+            if (isInitialCall) {
+              await fetchAllTodos();
+            }
+          } else {
+            throw new Error("User data empty");
+          }
+        }
       } catch (err) {
-        console.error("Gagal inisialisasi");
+        console.error("Sesi tidak valid:", err);
+        logoutUser(
+          "Sesi tidak valid atau telah berakhir, mohon menghubungkan ulang."
+        );
+      } finally {
+        if (isMounted && isInitialCall) {
+          setIsLoading(false);
+        }
       }
     };
-    initApp();
+
+    checkSession(true);
+
+    intervalId = setInterval(() => {
+      checkSession(false);
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [navigate]);
 
   // 2. FETCH KOMENTAR: Berjalan otomatis setiap kali 'todos' berhasil di-load
@@ -340,8 +390,7 @@ function TodoPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear(); // Bersihin semua biar gak ada sisa
     window.location.href = "/login";
   };
 

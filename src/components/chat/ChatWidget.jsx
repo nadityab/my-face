@@ -10,6 +10,9 @@ const ChatWidget = ({ onSelectUser }) => {
   // Ambil data unreadCounts (jumlah pesan per user) dan resetUnread dari Context
   const { onlineUsers, unreadCounts, resetUnread } = useSocket();
 
+  // 🛡️ Ambil ID diri sendiri dari localStorage untuk filter
+  const currentUserId = localStorage.getItem("userId");
+
   // Hitung total semua pesan yang belum dibaca untuk ditampilkan di tombol utama
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
@@ -37,7 +40,6 @@ const ChatWidget = ({ onSelectUser }) => {
           <div className="p-4 bg-blue-600 text-white font-bold flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span>Obrolan</span>
-              {/* Notif total di dalam header chat list (opsional) */}
               {totalUnread > 0 && (
                 <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full text-white">
                   {totalUnread} baru
@@ -54,7 +56,9 @@ const ChatWidget = ({ onSelectUser }) => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {users.length > 0 ? (
-              [...users]
+              users
+                // 🛡️ FILTER: Jangan tampilkan jika ID user sama dengan ID saya
+                .filter((u) => u._id !== currentUserId)
                 .sort((a, b) => {
                   const aOnline = onlineUsers.includes(a._id);
                   const bOnline = onlineUsers.includes(b._id);
@@ -65,10 +69,9 @@ const ChatWidget = ({ onSelectUser }) => {
                     key={user._id}
                     onClick={() => {
                       onSelectUser(user);
-                      resetUnread(user._id); // ✅ Hapus notif merah saat user diklik
+                      resetUnread(user._id);
                       setIsOpen(false);
                     }}
-                    // Tambahkan flex-row justify-between agar badge merah ada di kanan
                     className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-50 group"
                   >
                     <div className="flex items-center gap-3">
@@ -81,7 +84,6 @@ const ChatWidget = ({ onSelectUser }) => {
                           className="w-10 h-10 rounded-full object-cover shadow-sm"
                           alt=""
                         />
-                        {/* Indikator Online */}
                         {onlineUsers.includes(user._id) && (
                           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
                         )}
@@ -104,7 +106,6 @@ const ChatWidget = ({ onSelectUser }) => {
                       </div>
                     </div>
 
-                    {/* ✅ BADGE MERAH PER USER: Muncul jika ada pesan belum dibaca dari user ini */}
                     {unreadCounts[user._id] > 0 && (
                       <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-bounce group-hover:animate-none">
                         {unreadCounts[user._id]}
@@ -151,7 +152,6 @@ const ChatWidget = ({ onSelectUser }) => {
           )}
         </button>
 
-        {/* ✅ BADGE TOTAL NOTIFIKASI: Muncul di atas tombol melayang saat ada pesan baru */}
         {!isOpen && totalUnread > 0 && (
           <div className="absolute -top-1 -left-1 bg-red-600 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-md animate-pulse">
             {totalUnread > 99 ? "99+" : totalUnread}

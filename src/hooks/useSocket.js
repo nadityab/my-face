@@ -1,15 +1,14 @@
 // src/hooks/useSocket.js
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-
-const SOCKET_URL = "http://localhost:3000"; // Sesuaikan port backend kamu
+import api, { API_URL } from "../api";
 
 export const useSocket = (userId) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
-    const newSocket = io(SOCKET_URL, {
+    const newSocket = io(API_URL, {
       withCredentials: true,
     });
 
