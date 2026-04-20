@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_URL } from "../../api";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import { FaArrowDown } from "react-icons/fa"; // ✅ Icon sudah siap tempur
+import { FaArrowDown } from "react-icons/fa";
 
 const ChatWindow = ({ selectedUser, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -22,13 +22,11 @@ const ChatWindow = ({ selectedUser, onClose }) => {
     if (loading || (!hasMore && !isInitial)) return;
 
     const container = scrollContainerRef.current;
-    // 📸 Snapshot tinggi sebelum render data baru
     const oldScrollHeight = container?.scrollHeight || 0;
 
     setLoading(true);
     try {
       const currentSkip = isInitial ? 0 : skip;
-      // ✅ URL FIXED: Menggunakan path param & query param yang benar
       const res = await axios.get(
         `${API_URL}/chat/history/${currentUserId}/${selectedUser._id}?limit=10&skip=${currentSkip}`
       );
@@ -38,11 +36,12 @@ const ChatWindow = ({ selectedUser, onClose }) => {
       if (isInitial) {
         setMessages(newMessages);
         setSkip(10);
+        // ✅ AUTO SCROLL: Saat pertama kali buka chat, langsung ke bawah
+        setTimeout(() => scrollToBottom(), 100);
       } else {
         setMessages((prev) => [...newMessages, ...prev]);
         setSkip((prev) => prev + 10);
 
-        // 🛠 TRICK SAKTI: Menahan posisi scroll agar tidak loncat ke atas
         requestAnimationFrame(() => {
           if (container) {
             const newScrollHeight = container.scrollHeight;
@@ -59,7 +58,7 @@ const ChatWindow = ({ selectedUser, onClose }) => {
     }
   };
 
-  // 2. Initial Load saat ganti user
+  // 2. Initial Load
   useEffect(() => {
     if (selectedUser) {
       setMessages([]);
@@ -75,13 +74,9 @@ const ChatWindow = ({ selectedUser, onClose }) => {
   // 3. Deteksi posisi Scroll
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
-
-    // A. Tarik pesan lama jika mentok atas
     if (scrollTop === 0 && hasMore && !loading) {
       fetchHistory();
     }
-
-    // B. Munculkan tombol panah jika user "naik" ke atas (> 200px dari bawah)
     const isBottom = scrollHeight - scrollTop - clientHeight < 200;
     setShowScrollBtn(!isBottom);
   };
@@ -95,7 +90,27 @@ const ChatWindow = ({ selectedUser, onClose }) => {
     }
   };
 
-  // 4. Socket listener untuk pesan baru
+  // ✅ 4. LOGIKA AUTO SCROLL CERDAS
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || messages.length === 0 || loading) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const sentByMe = lastMessage.sender === currentUserId;
+
+    // Cek apakah user sedang berada di area bawah (toleransi 150px)
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
+
+    // Scroll hanya jika:
+    // 1. Saya yang kirim pesan
+    // 2. Pesan masuk saat saya memang sedang di bawah
+    if (sentByMe || isAtBottom) {
+      scrollToBottom();
+    }
+  }, [messages]); // Trigger setiap kali ada pesan baru
+
+  // 5. Socket listener
   useEffect(() => {
     if (!socket) return;
     const handleReceive = (msg) => {
@@ -114,7 +129,6 @@ const ChatWindow = ({ selectedUser, onClose }) => {
 
   return (
     <div className="fixed bottom-24 right-6 z-50 w-80 h-112.5 bg-white shadow-2xl rounded-2xl border border-blue-100 flex flex-col overflow-hidden animate-slide-in">
-      {/* Header */}
       <div className="p-3 bg-blue-600 text-white flex justify-between items-center shadow-md">
         <div className="flex items-center gap-2">
           <img
@@ -134,7 +148,6 @@ const ChatWindow = ({ selectedUser, onClose }) => {
         </button>
       </div>
 
-      {/* Area Chat */}
       <div className="relative flex-1 overflow-hidden flex flex-col">
         <div
           ref={scrollContainerRef}
@@ -150,7 +163,6 @@ const ChatWindow = ({ selectedUser, onClose }) => {
           <ChatMessages messages={messages} currentUserId={currentUserId} />
         </div>
 
-        {/* 🔘 Tombol Panah Bawah - Pakai FaArrowDown */}
         {showScrollBtn && (
           <button
             onClick={scrollToBottom}
