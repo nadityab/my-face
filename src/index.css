@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Di Tailwind v4, kita tentukan selector dark mode di sini */
+@variant dark (&:where(.dark, .dark *));
 
 ::-webkit-scrollbar {
   width: 6px;
