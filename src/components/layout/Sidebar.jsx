@@ -145,7 +145,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className="relative pl-8 border-l-2 border-gray-100 dark:border-slate-800 last:border-l-transparent pb-4"
                 >
                   <span
-                    className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 border-white dark:border-slate-900 shadow-sm ${
+                    className={`absolute -left-2.75 top-1 h-5 w-5 rounded-full border-4 border-white dark:border-slate-900 shadow-sm ${
                       update.version === NEWS_UPDATES[0].version
                         ? "bg-blue-500"
                         : "bg-gray-300 dark:bg-gray-600"

@@ -1,13 +1,11 @@
 import React from "react";
 import { Image } from "antd";
 import CommentInputBox from "./CommentInputBox"; // Sesuaikan path jika beda
-
 import api, { API_URL } from "../api";
 
 const PostCard = ({
   todo,
   currentUser,
-  api,
   comments,
   setComments,
   activeCommentBox,
@@ -23,25 +21,30 @@ const PostCard = ({
   handleDeleteComment,
   refreshFeed,
 }) => {
+  // api diprop tapi juga diimport, kita pake prop aja biar konsisten
   const isMyPost = todo.userId?._id === currentUser?._id;
 
   return (
     <div
       id={todo._id}
       style={{ scrollMarginTop: "100px" }}
-      className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden relative"
+      // 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-900, border-gray-100 -> dark:border-slate-800
+      className="bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-100 dark:border-slate-800 overflow-hidden relative transition-colors duration-300"
     >
       {/* --- HEADER POST --- */}
       <div className="flex items-center justify-between p-4 gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-linear-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-inner">
+          {/* 🌓 FIX DARK MODE: text-white -> dark:text-slate-900 (opsional, biar kontras aja) */}
+          <div className="w-10 h-10 rounded-full bg-linear-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white dark:text-slate-900 font-bold shadow-inner">
             {todo.userId?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           <div className="flex flex-col">
-            <strong className="text-sm text-gray-900 hover:underline cursor-pointer">
+            {/* 🌓 FIX DARK MODE: text-gray-900 -> dark:text-white */}
+            <strong className="text-sm text-gray-900 dark:text-white hover:underline cursor-pointer">
               {todo.userId?.username || "Anonymous"}
             </strong>
-            <span className="text-xs text-gray-500">
+            {/* 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400 */}
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {formatTimestamp(todo.createdAt)} • 🌍 Public
             </span>
           </div>
@@ -53,11 +56,13 @@ const PostCard = ({
                 e.stopPropagation();
                 setOpenMenuId(openMenuId === todo._id ? null : todo._id);
               }}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              // 🌓 FIX DARK MODE: hover:bg-gray-100 -> dark:hover:bg-slate-800
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
             >
+              {/* 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400 */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-500"
+                className="h-5 w-5 text-gray-500 dark:text-gray-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -76,13 +81,15 @@ const PostCard = ({
                   className="fixed inset-0 z-10"
                   onClick={() => setOpenMenuId(null)}
                 ></div>
-                <div className="absolute right-0 top-full mt-1 w-32 bg-white border rounded-lg shadow-xl z-20">
+                {/* 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-800, border -> dark:border-slate-700 */}
+                <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl z-20 overflow-hidden">
                   <button
                     onClick={() => {
                       startEdit(todo);
                       setOpenMenuId(null);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                    // 🌓 FIX DARK MODE: text-gray-700 -> dark:text-gray-200, hover:bg-blue-50 -> dark:hover:bg-blue-950
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-950"
                   >
                     ✏️ Edit
                   </button>
@@ -91,7 +98,8 @@ const PostCard = ({
                       handleDelete(todo._id);
                       setOpenMenuId(null);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    // 🌓 FIX DARK MODE: hover:bg-red-50 -> dark:hover:bg-red-950
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
                   >
                     🗑️ Delete
                   </button>
@@ -103,8 +111,10 @@ const PostCard = ({
       </div>
 
       {/* --- BODY POST --- */}
-      <div className="px-4 py-3 border-t border-gray-50">
-        <p className="text-base leading-relaxed text-gray-800 mb-3 whitespace-pre-wrap">
+      {/* 🌓 FIX DARK MODE: border-gray-50 -> dark:border-slate-800 */}
+      <div className="px-4 py-3 border-t border-gray-50 dark:border-slate-800">
+        {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
+        <p className="text-base leading-relaxed text-gray-800 dark:text-gray-100 mb-3 whitespace-pre-wrap">
           {todo.task}
         </p>
 
@@ -113,16 +123,17 @@ const PostCard = ({
           <div className="mt-3 -mx-4 sm:mx-0">
             <Image.PreviewGroup>
               {todo.images.length === 1 && (
-                <div className="rounded-lg overflow-hidden flex justify-center items-center bg-gray-50">
+                // 🌓 FIX DARK MODE: bg-gray-50 -> dark:bg-slate-800
+                <div className="rounded-lg overflow-hidden flex justify-center items-center bg-gray-50 dark:bg-slate-800 border dark:border-slate-800 sm:rounded-xl">
                   <Image
                     src={`${API_URL}${todo.images[0]}`}
-                    className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer sm:rounded-xl"
+                    className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
                     width="100%"
                   />
                 </div>
               )}
               {todo.images.length === 2 && (
-                <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden">
+                <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden border dark:border-slate-800">
                   <Image
                     src={`${API_URL}${todo.images[0]}`}
                     className="aspect-square object-cover w-full cursor-pointer"
@@ -136,7 +147,7 @@ const PostCard = ({
                 </div>
               )}
               {todo.images.length === 3 && (
-                <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden">
+                <div className="grid grid-cols-2 gap-1 sm:rounded-xl overflow-hidden border dark:border-slate-800">
                   <div className="col-span-2">
                     <Image
                       src={`${API_URL}${todo.images[0]}`}
@@ -157,7 +168,7 @@ const PostCard = ({
                 </div>
               )}
               {todo.images.length >= 4 && (
-                <div className="grid grid-cols-3 gap-1 sm:rounded-xl overflow-hidden">
+                <div className="grid grid-cols-3 gap-1 sm:rounded-xl overflow-hidden border dark:border-slate-800">
                   <div className="col-span-3">
                     <Image
                       src={`${API_URL}${todo.images[0]}`}
@@ -175,7 +186,7 @@ const PostCard = ({
                     className="aspect-square object-cover w-full cursor-pointer"
                     width="100%"
                   />
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full overflow-hidden">
                     <Image
                       src={`${API_URL}${todo.images[3]}`}
                       className="aspect-square object-cover w-full cursor-pointer block"
@@ -189,7 +200,6 @@ const PostCard = ({
                   </div>
                 </div>
               )}
-              {/* Sisa Gambar Hidden untuk PreviewGroup */}
               {todo.images.length > 4 && (
                 <div className="hidden">
                   {todo.images.slice(4).map((img, index) => (
@@ -203,10 +213,11 @@ const PostCard = ({
 
         {/* LOGIKA 1 GAMBAR LAMA (Fallback) */}
         {todo.image && (!todo.images || todo.images.length === 0) && (
-          <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center bg-gray-50">
+          // 🌓 FIX DARK MODE: bg-gray-50 -> dark:bg-slate-800
+          <div className="mt-3 rounded-lg overflow-hidden flex justify-center items-center bg-gray-50 dark:bg-slate-800 border dark:border-slate-800 sm:rounded-xl">
             <Image
               src={`${API_URL}${todo.image}`}
-              className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer sm:rounded-xl"
+              className="max-w-full h-auto object-contain max-h-112.5 cursor-pointer"
               width="100%"
             />
           </div>
@@ -214,13 +225,15 @@ const PostCard = ({
       </div>
 
       {/* --- TOMBOL ENGAGEMENT --- */}
-      <div className="flex items-center gap-6 px-4 py-2 border-t border-b border-gray-50 bg-gray-50/30">
+      {/* 🌓 FIX DARK MODE: border-gray-50 -> dark:border-slate-800, bg-gray-50/30 -> dark:bg-slate-800/30 */}
+      <div className="flex items-center gap-6 px-4 py-2 border-t border-b border-gray-50 dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/30 transition-colors">
         <button
           onClick={() => handleLike(todo._id)}
+          // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400
           className={`flex items-center gap-2 transition-all active:scale-125 ${
             (todo.likes || []).includes(currentUser?._id)
               ? "text-pink-500"
-              : "text-gray-500 hover:text-pink-500"
+              : "text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400"
           }`}
         >
           <span className="text-xl">
@@ -235,10 +248,11 @@ const PostCard = ({
           onClick={() =>
             setActiveCommentBox(activeCommentBox === todo._id ? null : todo._id)
           }
+          // 🌓 FIX DARK MODE: hover:bg-gray-100 -> dark:hover:bg-slate-800, text-gray-500 -> dark:text-gray-400, active bg-blue-50 -> dark:bg-blue-950, text-blue-600 -> dark:text-blue-400
           className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-sm font-semibold ${
             activeCommentBox === todo._id
-              ? "text-blue-600 bg-blue-50"
-              : "text-gray-500 hover:bg-gray-100"
+              ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
           }`}
         >
           <span className="text-xl">💬</span>
@@ -247,7 +261,8 @@ const PostCard = ({
 
         <button
           onClick={() => handleShare(todo)}
-          className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors"
+          // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400
+          className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
         >
           <span className="text-xl">🚀</span>
           <span className="text-xs font-bold">Share</span>
@@ -255,7 +270,8 @@ const PostCard = ({
       </div>
 
       {/* --- AREA KOMENTAR --- */}
-      <div className="px-4 pb-4 bg-white border-t border-gray-50">
+      {/* 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-900, border-gray-50 -> dark:border-slate-800 */}
+      <div className="px-4 pb-4 bg-white dark:bg-slate-900 border-t border-gray-50 dark:border-slate-800 transition-colors">
         {comments[todo._id]?.length > 1 && (
           <button
             onClick={() =>
@@ -263,7 +279,8 @@ const PostCard = ({
                 activeCommentBox === todo._id ? null : todo._id
               )
             }
-            className="text-xs text-blue-600 font-bold hover:underline py-2"
+            // 🌓 FIX DARK MODE: text-blue-600 -> dark:text-blue-400
+            className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline py-2"
           >
             {activeCommentBox === todo._id
               ? "Sembunyikan komentar"
@@ -277,28 +294,33 @@ const PostCard = ({
             : comments[todo._id]?.slice(-1)
           )?.map((comment) => (
             <div key={comment._id} className="flex gap-2 group">
-              <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-tr from-gray-200 to-gray-300 flex items-center justify-center text-[10px] font-bold shadow-sm">
+              {/* 🌓 FIX DARK MODE: from-gray-200 to-gray-300 -> dark:from-slate-700 dark:to-slate-800, text white (implied default) -> dark:text-white */}
+              <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-tr from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-[10px] text-gray-700 dark:text-white font-bold shadow-sm">
                 {comment.userId?.username?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 flex flex-col">
-                <div className="bg-gray-100 px-3 py-2 rounded-2xl inline-block max-w-[95%]">
+                {/* 🌓 FIX DARK MODE: bg-gray-100 -> dark:bg-slate-800 */}
+                <div className="bg-gray-100 dark:bg-slate-800 px-3 py-2 rounded-2xl inline-block max-w-[95%] transition-colors duration-300">
                   <div className="flex justify-between items-center gap-4">
-                    <span className="text-[12px] font-bold text-gray-900">
+                    {/* 🌓 FIX DARK MODE: text-gray-900 -> dark:text-white */}
+                    <span className="text-[12px] font-bold text-gray-900 dark:text-white hover:underline cursor-pointer">
                       {comment.userId?.username}
                     </span>
-                    <span className="text-[9px] text-gray-400 font-medium">
+                    {/* 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500 */}
+                    <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium">
                       {formatTimestamp(comment.createdAt)}
                     </span>
                   </div>
-                  <p className="text-[13px] mt-0.5 text-gray-800 leading-snug whitespace-pre-wrap">
+                  {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
+                  <p className="text-[13px] mt-0.5 text-gray-800 dark:text-gray-100 leading-snug whitespace-pre-wrap">
                     {comment.content}
                   </p>
                   {comment.image && (
-                    <div className="mt-2 rounded-lg overflow-hidden max-w-50">
+                    <div className="mt-2 rounded-lg overflow-hidden max-w-50 border dark:border-slate-700">
                       <Image
                         src={`${API_URL}${comment.image}`}
                         alt="Comment attachment"
-                        className="w-full object-cover rounded-md cursor-pointer"
+                        className="w-full object-cover cursor-pointer"
                       />
                     </div>
                   )}
@@ -306,23 +328,26 @@ const PostCard = ({
                 <div className="flex items-center gap-4 ml-2 mt-1">
                   <button
                     onClick={() => handleLikeComment(comment._id, todo._id)}
+                    // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400, hover text-blue-600 -> dark:text-blue-400, text-pink-500
                     className={`text-[11px] font-bold transition-colors ${
                       comment.likes?.includes(currentUser?._id)
                         ? "text-pink-500"
-                        : "text-gray-500 hover:text-blue-600"
+                        : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                     }`}
                   >
                     Suka
                   </button>
                   {comment.likes?.length > 0 && (
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    // 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500
+                    <span className="text-[11px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
                       ❤️ {comment.likes.length}
                     </span>
                   )}
                   {comment.userId?._id === currentUser?._id && (
                     <button
                       onClick={() => handleDeleteComment(comment._id, todo._id)}
-                      className="text-red-400 hover:text-red-600 text-[11px] font-medium transition-colors"
+                      // 🌓 FIX DARK MODE: text-red-400 -> dark:text-red-500
+                      className="text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 text-[11px] font-medium transition-colors"
                     >
                       Hapus
                     </button>

@@ -22,7 +22,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-8 bg-white p-3 sm:p-4 rounded-xl shadow-md border border-gray-100 flex flex-col gap-3 mx-2 sm:mx-0 overflow-hidden"
+      // 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-900, border-gray-100 -> dark:border-slate-800
+      className="mb-8 bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl shadow-md border border-gray-100 dark:border-slate-800 flex flex-col gap-3 mx-2 sm:mx-0 overflow-hidden transition-colors duration-300"
     >
       {/* --- INPUT AREA --- */}
       <div className="flex gap-2 items-center w-full min-w-0">
@@ -32,7 +33,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Apa yang kamu pikirkan?"
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none overflow-hidden custom-scrollbar"
+            // 🌓 FIX DARK MODE: bg-gray-50 -> dark:bg-slate-800, border-gray-200 -> dark:border-slate-700, text-gray-900 (implicit) -> dark:text-white
+            className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none overflow-hidden custom-scrollbar"
             rows={1}
             onInput={(e) => {
               e.target.style.height = "auto";
@@ -44,7 +46,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
         {/* --- ACTIONS --- */}
         <div className="shrink-0 flex items-center gap-1 sm:gap-2">
           {/* Ikon Kamera */}
-          <label className="cursor-pointer p-2 hover:bg-blue-50 rounded-full transition-colors shrink-0 group">
+          {/* 🌓 FIX DARK MODE: hover:bg-blue-50 -> dark:hover:bg-slate-800 */}
+          <label className="cursor-pointer p-2 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0 group">
             <input
               type="file"
               multiple
@@ -54,7 +57,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
             />
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-gray-400 group-hover:text-blue-500 transition-colors"
+              // 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500
+              className="h-6 w-6 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -78,10 +82,11 @@ const CreatePostBox = ({ api, refreshFeed }) => {
           <button
             type="submit"
             disabled={isLoading || (!text.trim() && images.length === 0)}
+            // 🌓 FIX DARK MODE: bg-blue-300 -> dark:bg-blue-800, disabled logic...
             className={`shrink-0 text-white px-5 sm:px-7 py-2 rounded-full font-bold transition-all shadow-sm text-xs sm:text-sm whitespace-nowrap ${
               isLoading || (!text.trim() && images.length === 0)
-                ? "bg-blue-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-blue-200"
+                ? "bg-blue-300 dark:bg-blue-800 text-blue-100 cursor-not-allowed opacity-70"
+                : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-blue-200 dark:shadow-none"
             }`}
           >
             {isLoading ? "Memposting..." : "Post"}
@@ -91,15 +96,18 @@ const CreatePostBox = ({ api, refreshFeed }) => {
 
       {/* --- IMAGE PREVIEW AREA --- */}
       {images.length > 0 && (
-        <div className="mt-2 border-t border-gray-50 pt-3">
+        // 🌓 FIX DARK MODE: border-gray-50 -> dark:border-slate-800
+        <div className="mt-2 border-t border-gray-50 dark:border-slate-800 pt-3">
           <div className="flex justify-between items-center mb-2 px-1">
-            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+            {/* 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500 */}
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
               Preview Foto ({images.length}/10)
             </span>
             <button
               type="button"
               onClick={() => images.forEach((_, i) => removeImage(0))} // Opsional: Clear All
-              className="text-[10px] text-red-400 hover:underline"
+              // 🌓 FIX DARK MODE: text-red-400 -> dark:text-red-500
+              className="text-[10px] text-red-400 dark:text-red-500 hover:underline"
             >
               Hapus Semua
             </button>
@@ -112,7 +120,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
                   key={index}
                   className="relative shrink-0 snap-start animate-fade-in group"
                 >
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm h-24 w-24 sm:h-28 sm:w-28">
+                  {/* 🌓 FIX DARK MODE: border-gray-200 -> dark:border-slate-700, bg-gray-50 -> dark:bg-slate-800 */}
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 shadow-sm h-24 w-24 sm:h-28 sm:w-28">
                     <Image
                       src={URL.createObjectURL(file)}
                       alt={`preview-${index}`}
@@ -125,7 +134,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-white text-red-500 border border-red-100 rounded-full w-6 h-6 text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-50 z-20 transition-all hover:scale-110"
+                    // 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-800, text-red-500, border dark:border-slate-600
+                    className="absolute -top-2 -right-2 bg-white dark:bg-slate-800 text-red-500 border border-red-100 dark:border-slate-600 rounded-full w-6 h-6 text-xs font-bold flex items-center justify-center shadow-md hover:bg-red-50 dark:hover:bg-slate-700 z-20 transition-all hover:scale-110"
                   >
                     ✕
                   </button>
