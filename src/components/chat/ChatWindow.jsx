@@ -128,8 +128,10 @@ const ChatWindow = ({ selectedUser, onClose }) => {
   }, [socket, selectedUser, currentUserId]);
 
   return (
-    <div className="fixed bottom-24 right-6 z-50 w-80 h-112.5 bg-white shadow-2xl rounded-2xl border border-blue-100 flex flex-col overflow-hidden animate-slide-in">
-      <div className="p-3 bg-blue-600 text-white flex justify-between items-center shadow-md">
+    // 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-900, border-blue-100 -> dark:border-slate-700
+    <div className="fixed bottom-24 right-6 z-50 w-80 h-112.5 bg-white dark:bg-slate-900 shadow-2xl rounded-2xl border border-blue-100 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in transition-colors duration-300">
+      {/* 🌓 FIX DARK MODE: bg-blue-600 -> dark:bg-slate-800 */}
+      <div className="p-3 bg-blue-600 dark:bg-slate-800 text-white flex justify-between items-center shadow-md transition-colors duration-300">
         <div className="flex items-center gap-2">
           <img
             src={
@@ -143,20 +145,26 @@ const ChatWindow = ({ selectedUser, onClose }) => {
             {selectedUser.username}
           </span>
         </div>
-        <button onClick={onClose} className="hover:bg-blue-700 p-1 rounded">
+        {/* 🌓 FIX DARK MODE: hover:bg-blue-700 -> dark:hover:bg-slate-700 */}
+        <button
+          onClick={onClose}
+          className="hover:bg-blue-700 dark:hover:bg-slate-700 p-1 rounded transition-colors duration-300"
+        >
           ✕
         </button>
       </div>
 
       <div className="relative flex-1 overflow-hidden flex flex-col">
+        {/* 🌓 FIX DARK MODE: bg-gray-50 -> dark:bg-slate-950 (biar area obrolan lebih gelap dari headernya) */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           style={{ overflowAnchor: "auto" }}
-          className="flex-1 overflow-y-auto bg-gray-50 custom-scrollbar"
+          className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950 custom-scrollbar transition-colors duration-300"
         >
           {loading && (
-            <div className="text-[10px] text-center text-blue-400 py-2">
+            // 🌓 FIX DARK MODE: text-blue-400 -> dark:text-blue-500
+            <div className="text-[10px] text-center text-blue-400 dark:text-blue-500 py-2">
               Memuat pesan lama...
             </div>
           )}
@@ -164,9 +172,10 @@ const ChatWindow = ({ selectedUser, onClose }) => {
         </div>
 
         {showScrollBtn && (
+          // 🌓 FIX DARK MODE: bg-blue-600 -> dark:bg-blue-700, hover:bg-blue-700 -> dark:hover:bg-blue-600
           <button
             onClick={scrollToBottom}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white p-2.5 rounded-full shadow-lg hover:bg-blue-700 transition-all animate-bounce flex items-center justify-center border border-white/20 z-10"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-blue-600 dark:bg-blue-700 text-white p-2.5 rounded-full shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-all animate-bounce flex items-center justify-center border border-white/20 dark:border-slate-600 z-10"
             title="Scroll ke bawah"
           >
             <FaArrowDown size={14} />
