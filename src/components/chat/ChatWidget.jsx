@@ -3,17 +3,49 @@ import axios from "axios";
 import { useSocket } from "../../context/SocketContext";
 import api, { API_URL } from "../../api";
 
+// ✅ Helper untuk format Last Seen
+const formatLastSeen = (dateString) => {
+  if (!dateString) return "Offline"; // Jaga-jaga kalau backend belum punya data ini
+
+  const date = new Date(dateString);
+  const now = new Date();
+
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  ).getTime();
+  const yesterday = today - 24 * 60 * 60 * 1000;
+  const compareDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  ).getTime();
+
+  const timeStr = date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (compareDate === today) {
+    return `Terakhir aktif hari ini, ${timeStr}`;
+  } else if (compareDate === yesterday) {
+    return `Terakhir aktif kemarin, ${timeStr}`;
+  } else {
+    return `Terakhir aktif ${date.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })}, ${timeStr}`;
+  }
+};
+
 const ChatWidget = ({ onSelectUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [users, setUsers] = useState([]);
 
-  // Ambil data unreadCounts (jumlah pesan per user) dan resetUnread dari Context
   const { onlineUsers, unreadCounts, resetUnread } = useSocket();
-
-  // 🛡️ Ambil ID diri sendiri dari localStorage untuk filter
   const currentUserId = localStorage.getItem("userId");
-
-  // Hitung total semua pesan yang belum dibaca untuk ditampilkan di tombol utama
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -34,12 +66,8 @@ const ChatWidget = ({ onSelectUser }) => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
-      {/* 1. Jendela Daftar User (Hanya muncul jika isOpen true) */}
       {isOpen && (
-        // 🌓 FIX DARK MODE: bg-white -> dark:bg-slate-900, border-gray-100 -> dark:border-slate-800
         <div className="w-72 h-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 flex flex-col overflow-hidden animate-fade-in-up transition-colors duration-300">
-          {/* Header Widget Chat */}
-          {/* 🌓 FIX DARK MODE: bg-blue-600 -> dark:bg-blue-800 (biar nggak terlalu ngejreng di mode malam) */}
           <div className="p-4 bg-blue-600 dark:bg-blue-800 text-white font-bold flex justify-between items-center transition-colors duration-300">
             <div className="flex items-center gap-2">
               <span>Obrolan</span>
@@ -60,7 +88,6 @@ const ChatWidget = ({ onSelectUser }) => {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {users.length > 0 ? (
               users
-                // 🛡️ FILTER: Jangan tampilkan jika ID user sama dengan ID saya
                 .filter((u) => u._id !== currentUserId)
                 .sort((a, b) => {
                   const aOnline = onlineUsers.includes(a._id);
@@ -75,7 +102,6 @@ const ChatWidget = ({ onSelectUser }) => {
                       resetUnread(user._id);
                       setIsOpen(false);
                     }}
-                    // 🌓 FIX DARK MODE: hover:bg-gray-50 -> dark:hover:bg-slate-800, border-gray-50 -> dark:border-slate-800
                     className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all border-b border-gray-50 dark:border-slate-800 group"
                   >
                     <div className="flex items-center gap-3">
@@ -89,12 +115,10 @@ const ChatWidget = ({ onSelectUser }) => {
                           alt=""
                         />
                         {onlineUsers.includes(user._id) && (
-                          // 🌓 FIX DARK MODE: border-white -> dark:border-slate-900 (biar nyatu sama background item)
                           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse transition-colors duration-300"></span>
                         )}
                       </div>
                       <div className="flex flex-col">
-                        {/* 🌓 FIX DARK MODE: text-gray-700 -> dark:text-gray-300, text-blue-600 -> dark:text-blue-400 */}
                         <span
                           className={`text-sm font-semibold transition-colors duration-300 ${
                             onlineUsers.includes(user._id)
@@ -104,11 +128,13 @@ const ChatWidget = ({ onSelectUser }) => {
                         >
                           {user.username}
                         </span>
-                        {/* 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500 */}
+
+                        {/* ✅ PERUBAHAN LAST SEEN DI SINI */}
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 transition-colors duration-300">
                           {onlineUsers.includes(user._id)
                             ? "Sedang aktif"
-                            : "Offline"}
+                            : formatLastSeen(user.lastSeen)}{" "}
+                          {/* Pastikan nama field-nya 'lastSeen' sesuai dari Backend kamu */}
                         </span>
                       </div>
                     </div>
@@ -121,7 +147,6 @@ const ChatWidget = ({ onSelectUser }) => {
                   </div>
                 ))
             ) : (
-              // 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500
               <p className="text-center text-gray-400 dark:text-gray-500 text-xs mt-10 italic transition-colors duration-300">
                 Belum ada teman yang terdaftar...
               </p>
@@ -130,11 +155,9 @@ const ChatWidget = ({ onSelectUser }) => {
         </div>
       )}
 
-      {/* 2. Tombol Melayang (Floating Button) */}
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          // 🌓 FIX DARK MODE: bg-gray-200 -> dark:bg-slate-700, text-gray-600 -> dark:text-gray-300
           className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-90 ${
             isOpen
               ? "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
@@ -162,7 +185,6 @@ const ChatWidget = ({ onSelectUser }) => {
         </button>
 
         {!isOpen && totalUnread > 0 && (
-          // 🌓 FIX DARK MODE: border-white -> dark:border-slate-900 (opsional, tapi bikin rapi)
           <div className="absolute -top-1 -left-1 bg-red-600 text-white text-[10px] font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-md animate-pulse transition-colors duration-300">
             {totalUnread > 99 ? "99+" : totalUnread}
           </div>
