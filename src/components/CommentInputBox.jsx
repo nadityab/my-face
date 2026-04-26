@@ -22,18 +22,21 @@ const CommentInputBox = ({
   } = useAddComment(todoId, api, setComments, fetchAllTodos);
 
   return (
-    <div className="mt-4 flex gap-2 items-end w-full">
+    <div className="mt-4 flex gap-2 items-end w-full transition-colors duration-300">
       {/* Avatar User */}
-      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shadow-sm mb-1">
+      {/* 🌓 FIX DARK MODE: bg-blue-100 -> dark:bg-slate-700, text-blue-600 -> dark:text-blue-400 */}
+      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400 shadow-sm mb-1 transition-colors duration-300">
         {currentUser?.username?.charAt(0).toUpperCase() || "?"}
       </div>
 
       {/* BUBBLE ABU-ABU UTAMA */}
-      <div className="flex-1 flex flex-col bg-gray-100 rounded-2xl p-2 shadow-inner transition-all overflow-hidden">
+      {/* 🌓 FIX DARK MODE: bg-gray-100 -> dark:bg-slate-800 */}
+      <div className="flex-1 flex flex-col bg-gray-100 dark:bg-slate-800 rounded-2xl p-2 shadow-inner transition-colors duration-300 overflow-hidden">
         {/* 1. AREA PREVIEW GAMBAR */}
         {image && (
           <div className="relative self-start mb-2 ml-1">
-            <div className="relative rounded-lg overflow-hidden border border-gray-300/50 bg-black/5 flex items-center justify-center p-0.5">
+            {/* 🌓 FIX DARK MODE: border-gray-300/50 -> dark:border-slate-600/50, bg-black/5 -> dark:bg-white/5 */}
+            <div className="relative rounded-lg overflow-hidden border border-gray-300/50 dark:border-slate-600/50 bg-black/5 dark:bg-white/5 flex items-center justify-center p-0.5 transition-colors duration-300">
               <Image
                 src={URL.createObjectURL(image)} // Menggunakan state 'image' dari Hook
                 styles={{
@@ -67,7 +70,8 @@ const CommentInputBox = ({
           {/* Icon Kamera */}
           <label
             htmlFor={`upload-comment-image-${todoId}`}
-            className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 hover:text-blue-500 relative"
+            // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400
+            className="shrink-0 mr-2 ml-1 cursor-pointer hover:scale-110 transition-transform active:scale-95 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 relative"
           >
             <span className="text-lg">📷</span>
             <input
@@ -85,7 +89,8 @@ const CommentInputBox = ({
             placeholder="Tulis komentar..."
             value={text} // Dari Hook
             onChange={(e) => setText(e.target.value)} // Dari Hook
-            className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 placeholder-gray-400 resize-none overflow-hidden custom-scrollbar max-h-32"
+            // 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100, placeholder-gray-400 -> dark:placeholder-gray-500
+            className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none overflow-hidden custom-scrollbar max-h-32 transition-colors duration-300"
             rows={1}
             onInput={(e) => {
               e.target.style.height = "auto";
@@ -100,12 +105,16 @@ const CommentInputBox = ({
             className="disabled:opacity-50 transition-all ml-2 shrink-0 pr-1"
           >
             {isLoading ? (
-              <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              // 🌓 FIX DARK MODE: border-blue-600 -> dark:border-blue-400
+              <div className="h-5 w-5 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin transition-colors duration-300"></div>
             ) : (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 transition-colors ${
-                  text.trim() || image ? "text-blue-600" : "text-gray-400"
+                // 🌓 FIX DARK MODE: text-blue-600 -> dark:text-blue-400, text-gray-400 -> dark:text-gray-600
+                className={`h-5 w-5 transition-colors duration-300 ${
+                  text.trim() || image
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-600"
                 }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
