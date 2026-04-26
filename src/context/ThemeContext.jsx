@@ -3,15 +3,28 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  // 1. Logika penentuan tema awal (Smart Default)
+  const getInitialTheme = () => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) return savedTheme;
+
+    // Jika belum ada pilihan, cek setelan device/OS
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
     const root = window.document.documentElement;
+
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
+
     localStorage.setItem("theme", theme);
   }, [theme]);
 

@@ -1,7 +1,16 @@
 @import "tailwindcss";
 /* Di Tailwind v4, kita tentukan selector dark mode di sini */
+/* Tambahkan ini di bagian paling atas CSS kamu */
+/* 1. Supaya Tailwind v4 kenal class .dark */
 @variant dark (&:where(.dark, .dark *));
 
+/* 2. Perbaikan: Gunakan transition-property, bukan transition-color */
+* {
+  transition-property: color, background-color, border-color, outline-color,
+    decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
 ::-webkit-scrollbar {
   width: 6px;
 }
