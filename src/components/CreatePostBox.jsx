@@ -33,8 +33,8 @@ const CreatePostBox = ({ api, refreshFeed }) => {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Apa yang kamu pikirkan?"
-            // 🌓 FIX DARK MODE: bg-gray-50 -> dark:bg-slate-800, border-gray-200 -> dark:border-slate-700, text-gray-900 (implicit) -> dark:text-white
-            className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none overflow-hidden custom-scrollbar"
+            // 🌓 FIX DARK MODE: Tambahkan placeholder-gray-400 & dark:placeholder-gray-500
+            className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 text-sm resize-none overflow-hidden custom-scrollbar"
             rows={1}
             onInput={(e) => {
               e.target.style.height = "auto";

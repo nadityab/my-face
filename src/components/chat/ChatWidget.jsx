@@ -92,7 +92,18 @@ const ChatWidget = ({ onSelectUser }) => {
                 .sort((a, b) => {
                   const aOnline = onlineUsers.includes(a._id);
                   const bOnline = onlineUsers.includes(b._id);
-                  return bOnline - aOnline;
+
+                  // 1. PRIORITAS UTAMA: Online paling atas
+                  if (aOnline !== bOnline) {
+                    return bOnline - aOnline;
+                  }
+
+                  // 2. PRIORITAS KEDUA: Jika sama-sama offline, urutkan dari yang baru saja aktif (lastSeen terdekat)
+                  // Kita ubah ke timestamp (getTime) agar bisa dikurangi. Kalau tidak ada, anggap 0 (paling bawah).
+                  const timeA = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+                  const timeB = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+
+                  return timeB - timeA; // Besar ke Kecil (Terbaru ke Terlama)
                 })
                 .map((user) => (
                   <div
