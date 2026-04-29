@@ -90,8 +90,16 @@ const PostCard = ({
       <div className="flex items-center justify-between p-4 gap-3">
         <div className="flex items-center gap-3">
           {/* 🌓 FIX DARK MODE: text-white -> dark:text-slate-900 (opsional, biar kontras aja) */}
-          <div className="w-10 h-10 rounded-full bg-linear-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white dark:text-slate-900 font-bold shadow-inner">
-            {todo.userId?.username?.charAt(0).toUpperCase() || "A"}
+          <div className="w-10 h-10 rounded-full bg-linear-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white dark:text-slate-900 font-bold shadow-inner overflow-hidden">
+            {todo.userId?.avatar ? (
+              <img
+                src={`${API_URL}${todo.userId.avatar}`}
+                alt={todo.userId?.username}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              todo.userId?.username?.charAt(0)?.toUpperCase() || "A"
+            )}
           </div>
           <div className="flex flex-col">
             {/* 🌓 FIX DARK MODE: text-gray-900 -> dark:text-white */}
@@ -360,8 +368,16 @@ const PostCard = ({
           )?.map((comment) => (
             <div key={comment._id} className="flex gap-2 group">
               {/* 🌓 FIX DARK MODE: from-gray-200 to-gray-300 -> dark:from-slate-700 dark:to-slate-800, text white (implied default) -> dark:text-white */}
-              <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-tr from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-[10px] text-gray-700 dark:text-white font-bold shadow-sm">
-                {comment.userId?.username?.charAt(0).toUpperCase()}
+              <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-tr from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-[10px] text-gray-700 dark:text-white font-bold shadow-sm overflow-hidden">
+                {comment.userId?.avatar ? (
+                  <img
+                    src={`${API_URL}${comment.userId.avatar}`}
+                    alt={comment.userId?.username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  comment.userId?.username?.charAt(0)?.toUpperCase() || "?"
+                )}
               </div>
               <div className="flex-1 flex flex-col">
                 {/* 🌓 FIX DARK MODE: bg-gray-100 -> dark:bg-slate-800 */}

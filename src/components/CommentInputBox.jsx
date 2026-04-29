@@ -2,6 +2,7 @@ import React from "react";
 import { Image } from "antd"; // Pastikan Ant Design di-import
 import useAddComment from "../hooks/useAddComment";
 import MentionTextarea from "./MentionTextarea";
+import { API_URL } from "../api";
 
 // ✅ Tambahkan currentUser sebagai props agar Avatar bisa muncul
 const CommentInputBox = ({
@@ -27,8 +28,16 @@ const CommentInputBox = ({
     <div className="mt-4 flex gap-2 items-end w-full transition-colors duration-300">
       {/* Avatar User */}
       {/* 🌓 FIX DARK MODE: bg-blue-100 -> dark:bg-slate-700, text-blue-600 -> dark:text-blue-400 */}
-      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400 shadow-sm mb-1 transition-colors duration-300">
-        {currentUser?.username?.charAt(0).toUpperCase() || "?"}
+      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400 shadow-sm mb-1 transition-colors duration-300 overflow-hidden">
+        {currentUser?.avatar ? (
+          <img
+            src={`${API_URL}${currentUser.avatar}`}
+            alt={currentUser?.username}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          currentUser?.username?.charAt(0)?.toUpperCase() || "?"
+        )}
       </div>
 
       {/* BUBBLE ABU-ABU UTAMA */}
@@ -108,11 +117,10 @@ const CommentInputBox = ({
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 // 🌓 FIX DARK MODE: text-blue-600 -> dark:text-blue-400, text-gray-400 -> dark:text-gray-600
-                className={`h-5 w-5 transition-colors duration-300 ${
-                  text.trim() || image
+                className={`h-5 w-5 transition-colors duration-300 ${text.trim() || image
                     ? "text-blue-600 dark:text-blue-400"
                     : "text-gray-400 dark:text-gray-600"
-                }`}
+                  }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >

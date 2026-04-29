@@ -1,6 +1,7 @@
 // components/MentionTextarea.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { API_URL } from "../api";
 
 const MentionTextarea = ({
     value,
@@ -154,7 +155,7 @@ const MentionTextarea = ({
             {showMention && filteredUsers.length > 0 && createPortal(
                 <div
                     ref={mentionRef}
-                    className="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+                    className="fixed z-9999 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
                     style={{
                         top: mentionPosition.y,
                         left: mentionPosition.x,
@@ -171,8 +172,16 @@ const MentionTextarea = ({
                             onClick={() => selectMention(user)}
                             className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 border-b border-gray-100 dark:border-slate-700 last:border-0"
                         >
-                            <div className="w-8 h-8 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                                {user.username?.charAt(0).toUpperCase()}
+                            <div className="w-8 h-8 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+                                {user.avatar ? (
+                                    <img
+                                        src={`${API_URL}${user.avatar}`}
+                                        alt={user.username}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    user.username?.charAt(0)?.toUpperCase()
+                                )}
                             </div>
                             <div>
                                 <div className="font-medium text-gray-900 dark:text-white">

@@ -4,6 +4,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { FaSun, FaMoon, FaTimes, FaListUl, FaInfoCircle } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 import { NEWS_UPDATES } from "../../constants/news-updates"; // Sesuaikan path ini!
+import { CgProfile } from "react-icons/cg";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { theme, toggleTheme } = useTheme();
@@ -19,6 +20,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   // Menu Navigasi Utama
   const menuItems = [
     { path: "/home", name: "Beranda Utama", icon: <FaListUl /> },
+    { path: "/profile", name: "Profil", icon: <CgProfile /> },
     // Kamu bisa tambah menu lain di sini nanti
   ];
 

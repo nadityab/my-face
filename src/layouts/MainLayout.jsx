@@ -3,6 +3,7 @@ import Sidebar from "../components/layout/Sidebar";
 import { FaBars } from "react-icons/fa";
 import { useFeedContext } from "../context/FeedContext";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../api";
 
 const MainLayout = ({ children }) => {
 
@@ -123,12 +124,34 @@ const MainLayout = ({ children }) => {
                       : "hover:bg-gray-50 dark:hover:bg-slate-700"
                       }`}
                   >
-                    <p className="text-sm text-gray-800 dark:text-gray-200">
-                      {notif.message}
-                    </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(notif.createdAt).toLocaleString()}
-                    </span>
+<div className="flex items-start gap-3">
+  {/* Avatar */}
+  <div className="shrink-0 w-10 h-10 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold overflow-hidden">
+    {notif.fromUserId?.avatar ? (
+      <img
+        src={`${API_URL}${notif.fromUserId.avatar}`}
+        alt={notif.fromUserId?.username}
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      notif.fromUserId?.username?.charAt(0)?.toUpperCase() || "?"
+    )}
+  </div>
+
+  {/* Content */}
+  <div className="flex-1">
+    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+      {notif.fromUserId?.username || "Pengguna"}
+    </p>
+    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+      {notif.message}
+    </p>
+    <span className="text-xs text-gray-500 dark:text-gray-400">
+      {new Date(notif.createdAt).toLocaleString()}
+    </span>
+  </div>
+</div>
+
                   </div>
                 ))
               )}

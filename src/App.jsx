@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import TodoPage from "./pages/TodoPage";
+import ProfilePage from "./pages/ProfilePage";
 import MainLayout from "./layouts/MainLayout"; // 👈 Import Layout baru
 import { SocketProvider } from "./context/SocketContext";
 import { FeedProvider } from "./context/FeedContext";
@@ -49,6 +50,22 @@ function App() {
               <FeedProvider>
                 <MainLayout>
                   <TodoPage />
+                </MainLayout>
+              </FeedProvider>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* 3. Rute Profile */}
+        <Route
+          path="/profile"
+          element={
+            token ? (
+              <FeedProvider>
+                <MainLayout>
+                  <ProfilePage />
                 </MainLayout>
               </FeedProvider>
             ) : (
