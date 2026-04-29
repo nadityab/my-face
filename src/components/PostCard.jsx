@@ -20,9 +20,64 @@ const PostCard = ({
   handleLikeComment,
   handleDeleteComment,
   refreshFeed,
+  users
 }) => {
   // api diprop tapi juga diimport, kita pake prop aja biar konsisten
   const isMyPost = todo.userId?._id === currentUser?._id;
+
+
+  // Fungsi render mention
+  const renderTextWithMentions = (text, users) => {
+    if (!text) return null;
+
+    // Buat array username yang di-sort dari yang terpanjang (biar yang "kevin dev" tidak ke-match "kevin" dulu)
+    const sortedUsernames = [...users]
+      .map(u => u.username)
+      .sort((a, b) => b.length - a.length);
+
+    // Escape regex special characters dan buat pattern
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const mentionPattern = new RegExp(
+      `@(${sortedUsernames.map(escapeRegex).join('|')})(?=\\s|$)`,
+      'g'
+    );
+
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    // Reset regex lastIndex
+    mentionPattern.lastIndex = 0;
+
+    while ((match = mentionPattern.exec(text)) !== null) {
+      // Teks sebelum mention
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: text.slice(lastIndex, match.index)
+        });
+      }
+
+      // Mention yang ditemukan
+      parts.push({
+        type: 'mention',
+        content: match[0], // full "@kevin dev"
+        username: match[1]  // "kevin dev"
+      });
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Sisa teks
+    if (lastIndex < text.length) {
+      parts.push({
+        type: 'text',
+        content: text.slice(lastIndex)
+      });
+    }
+
+    return parts;
+  };
 
   return (
     <div
@@ -115,7 +170,19 @@ const PostCard = ({
       <div className="px-4 py-3 border-t border-gray-50 dark:border-slate-800">
         {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
         <p className="text-base leading-relaxed text-gray-800 dark:text-gray-100 mb-3 whitespace-pre-wrap">
-          {todo.task}
+          {renderTextWithMentions(todo.task, users).map((part, index) => {
+            if (part.type === 'mention') {
+              return (
+                <span
+                  key={index}
+                  className="text-blue-600 dark:text-blue-400 font-medium"
+                >
+                  {part.content}
+                </span>
+              );
+            }
+            return <span key={index}>{part.content}</span>;
+          })}
         </p>
 
         {/* LOGIKA BANYAK GAMBAR */}
@@ -230,11 +297,10 @@ const PostCard = ({
         <button
           onClick={() => handleLike(todo._id)}
           // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400
-          className={`flex items-center gap-2 transition-all active:scale-125 ${
-            (todo.likes || []).includes(currentUser?._id)
-              ? "text-pink-500"
-              : "text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400"
-          }`}
+          className={`flex items-center gap-2 transition-all active:scale-125 ${(todo.likes || []).includes(currentUser?._id)
+            ? "text-pink-500"
+            : "text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400"
+            }`}
         >
           <span className="text-xl">
             {(todo.likes || []).includes(currentUser?._id) ? "❤️" : "🤍"}
@@ -249,11 +315,10 @@ const PostCard = ({
             setActiveCommentBox(activeCommentBox === todo._id ? null : todo._id)
           }
           // 🌓 FIX DARK MODE: hover:bg-gray-100 -> dark:hover:bg-slate-800, text-gray-500 -> dark:text-gray-400, active bg-blue-50 -> dark:bg-blue-950, text-blue-600 -> dark:text-blue-400
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-sm font-semibold ${
-            activeCommentBox === todo._id
-              ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950"
-              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
-          }`}
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-sm font-semibold ${activeCommentBox === todo._id
+            ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950"
+            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+            }`}
         >
           <span className="text-xl">💬</span>
           <span>{comments[todo._id]?.length || 0} Komentar</span>
@@ -313,7 +378,19 @@ const PostCard = ({
                   </div>
                   {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
                   <p className="text-[13px] mt-0.5 text-gray-800 dark:text-gray-100 leading-snug whitespace-pre-wrap">
-                    {comment.content}
+                    {renderTextWithMentions(comment.content, users).map((part, index) => {
+                      if (part.type === 'mention') {
+                        return (
+                          <span
+                            key={index}
+                            className="text-blue-600 dark:text-blue-400 font-medium"
+                          >
+                            {part.content}
+                          </span>
+                        );
+                      }
+                      return <span key={index}>{part.content}</span>;
+                    })}
                   </p>
                   {comment.image && (
                     <div className="mt-2 rounded-lg overflow-hidden max-w-50 border dark:border-slate-700">
@@ -329,11 +406,10 @@ const PostCard = ({
                   <button
                     onClick={() => handleLikeComment(comment._id, todo._id)}
                     // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400, hover text-blue-600 -> dark:text-blue-400, text-pink-500
-                    className={`text-[11px] font-bold transition-colors ${
-                      comment.likes?.includes(currentUser?._id)
-                        ? "text-pink-500"
-                        : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                    }`}
+                    className={`text-[11px] font-bold transition-colors ${comment.likes?.includes(currentUser?._id)
+                      ? "text-pink-500"
+                      : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                      }`}
                   >
                     Suka
                   </button>
@@ -365,6 +441,7 @@ const PostCard = ({
           setComments={setComments}
           fetchAllTodos={refreshFeed}
           currentUser={currentUser}
+          users={users}
         />
       </div>
     </div>

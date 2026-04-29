@@ -6,6 +6,53 @@ const useFeed = (api) => {
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const observerTarget = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const [isLoadingNotif, setIsLoadingNotif] = useState(false);
+
+  // Fetch notifikasi
+  const fetchNotifications = useCallback(async () => {
+    if (isLoadingNotif) return;
+
+    setIsLoadingNotif(true);
+    try {
+      const res = await api.get(`/notif?page=1&limit=20`);
+      setNotifications(res.data.notifications);
+      setTotalUnread(res.data.totalUnread);
+    } catch (err) {
+      console.error("Gagal ambil notifikasi:", err);
+    } finally {
+      setIsLoadingNotif(false);
+    }
+  }, [api, isLoadingNotif]);
+
+  // Tandai notifikasi sebagai dibaca
+  const markNotifAsRead = async (notificationId) => {
+    try {
+      await api.put(`/notif/${notificationId}/read`);
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif._id === notificationId ? { ...notif, isRead: true } : notif
+        )
+      );
+      setTotalUnread(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Gagal tandai dibaca:", err);
+    }
+  };
+
+  // Tandai semua notifikasi sebagai dibaca
+  const markAllNotifAsRead = async () => {
+    try {
+      await api.put("/notif/read-all");
+      setNotifications(prev =>
+        prev.map(notif => ({ ...notif, isRead: true }))
+      );
+      setTotalUnread(0);
+    } catch (err) {
+      console.error("Gagal tandai semua dibaca:", err);
+    }
+  };
 
   const fetchTodos = useCallback(
     async (pageNum) => {
@@ -58,12 +105,18 @@ const useFeed = (api) => {
       // Ini tidak akan menghapus data lama yang sudah di-scroll ke bawah
       // karena logika di setTodos kita sudah pakai penanganan duplikat (New Set)
       fetchTodos(1);
+      fetchNotifications();
     }, 30000);
 
     // 2. CLEANUP: Sangat penting untuk menghapus interval saat user pindah halaman
     // Agar tidak terjadi memory leak atau aplikasi jadi berat
     return () => clearInterval(interval);
-  }, [fetchTodos]);
+  }, [fetchTodos, fetchNotifications]);
+
+  // Ambil notifikasi pertama kali saat mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   // Radar Infinite Scroll
   // --- RADAR INFINITE SCROLL (VERSI UPGRADE) ---
@@ -103,6 +156,7 @@ const useFeed = (api) => {
     setPage(1);
     setHasMore(true);
     fetchTodos(1);
+    fetchNotifications();
   };
 
   return {
@@ -112,6 +166,11 @@ const useFeed = (api) => {
     hasMore,
     observerTarget,
     refreshFeed,
+    notifications,
+    totalUnread,
+    isLoadingNotif,
+    markNotifAsRead,
+    markAllNotifAsRead,
   };
 };
 

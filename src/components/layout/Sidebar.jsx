@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { FaSun, FaMoon, FaTimes, FaListUl, FaInfoCircle } from "react-icons/fa";
+import { MdLogout } from "react-icons/md";
 import { NEWS_UPDATES } from "../../constants/news-updates"; // Sesuaikan path ini!
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -58,10 +59,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                 to={item.path}
                 onClick={onClose} // Tutup drawer saat diklik
                 className={({ isActive }) =>
-                  `flex items-center gap-3 p-3 rounded-xl transition-all ${
-                    isActive
-                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                  `flex items-center gap-3 p-3 rounded-xl transition-all ${isActive
+                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                   }`
                 }
               >
@@ -69,6 +69,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <span className="text-sm">{item.name}</span>
               </NavLink>
             ))}
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = "/login";
+              }}
+              className="flex items-center gap-3 p-3 rounded-xl transition-all text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 w-full mt-2 cursor-pointer"
+            >
+              <MdLogout size={20} />
+              <span className="text-sm">Logout</span>
+            </button>
           </nav>
 
           {/* Spacer */}
@@ -145,11 +155,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className="relative pl-8 border-l-2 border-gray-100 dark:border-slate-800 last:border-l-transparent pb-4"
                 >
                   <span
-                    className={`absolute -left-2.75 top-1 h-5 w-5 rounded-full border-4 border-white dark:border-slate-900 shadow-sm ${
-                      update.version === NEWS_UPDATES[0].version
-                        ? "bg-blue-500"
-                        : "bg-gray-300 dark:bg-gray-600"
-                    }`}
+                    className={`absolute -left-2.75 top-1 h-5 w-5 rounded-full border-4 border-white dark:border-slate-900 shadow-sm ${update.version === NEWS_UPDATES[0].version
+                      ? "bg-blue-500"
+                      : "bg-gray-300 dark:bg-gray-600"
+                      }`}
                   ></span>
                   <div className="mb-1">
                     <span

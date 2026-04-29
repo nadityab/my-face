@@ -3,6 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import TodoPage from "./pages/TodoPage";
 import MainLayout from "./layouts/MainLayout"; // 👈 Import Layout baru
 import { SocketProvider } from "./context/SocketContext";
+import { FeedProvider } from "./context/FeedContext";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -29,9 +30,11 @@ function App() {
           path="/home"
           element={
             token ? (
-              <MainLayout>
-                <TodoPage />
-              </MainLayout>
+              <FeedProvider>
+                <MainLayout>
+                  <TodoPage />
+                </MainLayout>
+              </FeedProvider>
             ) : (
               <Navigate to="/login" />
             )
@@ -43,9 +46,11 @@ function App() {
           path="/post/:postId"
           element={
             token ? (
-              <MainLayout>
-                <TodoPage />
-              </MainLayout>
+              <FeedProvider>
+                <MainLayout>
+                  <TodoPage />
+                </MainLayout>
+              </FeedProvider>
             ) : (
               <Navigate to="/login" />
             )

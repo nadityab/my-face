@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import api from "../api"; // ✅ API Path sudah benar
 import CreatePostBox from "../components/CreatePostBox";
@@ -7,6 +7,9 @@ import ChatWidget from "../components/chat/ChatWidget";
 import ChatWindow from "../components/chat/ChatWindow";
 import useFeed from "../hooks/useFeed";
 import PostCard from "../components/PostCard";
+import axios from "axios";
+import MentionTextarea from "../components/MentionTextarea";
+import { useFeedContext } from "../context/FeedContext";
 
 function TodoPage() {
   const {
@@ -16,7 +19,12 @@ function TodoPage() {
     hasMore,
     observerTarget,
     refreshFeed,
-  } = useFeed(api);
+    notifications,
+    totalUnread,
+    isLoadingNotif,
+    markNotifAsRead,
+    markAllNotifAsRead,
+  } = useFeedContext();
 
   const [inputTask, setInputTask] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -294,9 +302,8 @@ function TodoPage() {
     const shareUrl = `${window.location.origin}/post/${todo._id}`;
     const shareData = {
       title: "MyFace is Fun",
-      text: `Lihat postingan dari ${todo.userId?.username || "User"}: "${
-        todo.task
-      }"`,
+      text: `Lihat postingan dari ${todo.userId?.username || "User"}: "${todo.task
+        }"`,
       url: shareUrl,
     };
 
@@ -344,6 +351,67 @@ function TodoPage() {
     }
   };
 
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get("/chat/users");
+        setUsers(res.data);
+        console.log("data user :", res.data);
+      } catch (err) {
+        console.error("Gagal load users. Cek koneksi backend kamu!", err);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+
+
+const location = useLocation();
+const postRefs = useRef({});
+const isScrollingRef = useRef(false); // ✅ flag sementara, bukan ID
+
+const setPostRef = (postId, element) => {
+  if (element) {
+    postRefs.current[postId] = element;
+  }
+};
+
+useEffect(() => {
+  const scrollToPostId = location.state?.scrollToPost;
+
+  if (!scrollToPostId) return;
+
+  // ✅ Cegah scroll ganda dalam waktu bersamaan
+  if (isScrollingRef.current) {
+    console.log("Sedang scrolling, skip");
+    return;
+  }
+
+  if (postRefs.current[scrollToPostId]) {
+    isScrollingRef.current = true;
+
+    postRefs.current[scrollToPostId].scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    const element = postRefs.current[scrollToPostId];
+    element.classList.add("ring-2", "ring-blue-500", "bg-blue-50/50", "transition-all", "duration-300");
+
+    setTimeout(() => {
+      element.classList.remove("ring-2", "ring-blue-500", "bg-blue-50/50");
+      
+      // ✅ Reset flag setelah selesai
+      isScrollingRef.current = false;
+      
+      // Hapus state
+      window.history.replaceState({}, document.title);
+    }, 1000);
+  }
+}, [location.state]);
+
   return (
     <>
       {/* 🚀 CATATAN PERUBAHAN UI:
@@ -354,31 +422,41 @@ function TodoPage() {
       */}
       <div className="font-sans w-full max-w-xl mx-auto px-4 sm:px-0 pt-4 md:pt-0">
         {/* --- FORM TAMBAH POST (CAROUSEL EDITION) --- */}
-        <CreatePostBox api={api} refreshFeed={refreshFeed} />
+        <CreatePostBox api={api} refreshFeed={refreshFeed} users={users} />
 
         {/* --- LIST POSTINGAN (FEED) --- */}
         <div className="flex flex-col gap-6 mt-6">
           {todos.map((todo) => (
-            <PostCard
-              key={todo._id}
-              todo={todo}
-              currentUser={currentUser}
-              api={api}
-              comments={comments}
-              setComments={setComments}
-              activeCommentBox={activeCommentBox}
-              setActiveCommentBox={setActiveCommentBox}
-              openMenuId={openMenuId}
-              setOpenMenuId={setOpenMenuId}
-              formatTimestamp={formatTimestamp}
-              handleLike={handleLike}
-              handleShare={handleShare}
-              startEdit={startEdit}
-              handleDelete={handleDelete}
-              handleLikeComment={handleLikeComment}
-              handleDeleteComment={handleDeleteComment}
-              refreshFeed={refreshFeed}
-            />
+            <div
+              ref={(el) => {
+                if (el) {
+                  postRefs.current[todo._id] = el;
+                }
+              }}
+            >
+              <PostCard
+                key={todo._id}
+                ref={(el) => setPostRef(todo._id, el)}
+                todo={todo}
+                currentUser={currentUser}
+                api={api}
+                comments={comments}
+                setComments={setComments}
+                activeCommentBox={activeCommentBox}
+                setActiveCommentBox={setActiveCommentBox}
+                openMenuId={openMenuId}
+                setOpenMenuId={setOpenMenuId}
+                formatTimestamp={formatTimestamp}
+                handleLike={handleLike}
+                handleShare={handleShare}
+                startEdit={startEdit}
+                handleDelete={handleDelete}
+                handleLikeComment={handleLikeComment}
+                handleDeleteComment={handleDeleteComment}
+                refreshFeed={refreshFeed}
+                users={users}
+              />
+            </div>
           ))}
         </div>
 
@@ -435,10 +513,14 @@ function TodoPage() {
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
-              <textarea
-                className="w-full bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 h-28 transition-colors"
+              <MentionTextarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
+                placeholder="Edit postinganmu..."
+                users={users}  // ← kirim users dari props
+                className="w-full bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 h-28 transition-colors"
+                rows={3}
+                autoFocus={true}
               />
               <label className="flex-1 flex flex-col items-center justify-center px-4 py-4 bg-gray-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 rounded-xl border-2 border-dashed dark:border-slate-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                 <span className="text-xs font-semibold">
@@ -456,11 +538,10 @@ function TodoPage() {
               <button
                 onClick={() => handleUpdateText(selectedTodo._id)}
                 disabled={isLoading}
-                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${
-                  isLoading
-                    ? "bg-blue-400 cursor-not-allowed opacity-70"
-                    : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-                }`}
+                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${isLoading
+                  ? "bg-blue-400 cursor-not-allowed opacity-70"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                  }`}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">

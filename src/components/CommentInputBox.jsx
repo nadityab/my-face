@@ -1,6 +1,7 @@
 import React from "react";
 import { Image } from "antd"; // Pastikan Ant Design di-import
 import useAddComment from "../hooks/useAddComment";
+import MentionTextarea from "./MentionTextarea";
 
 // ✅ Tambahkan currentUser sebagai props agar Avatar bisa muncul
 const CommentInputBox = ({
@@ -9,6 +10,7 @@ const CommentInputBox = ({
   setComments,
   fetchAllTodos,
   currentUser,
+  users = []
 }) => {
   // Panggil Sang Otak
   const {
@@ -84,18 +86,13 @@ const CommentInputBox = ({
           </label>
 
           {/* Input Teks Utama */}
-          <textarea
-            id={`input-comment-${todoId}`}
+          <MentionTextarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             placeholder="Tulis komentar..."
-            value={text} // Dari Hook
-            onChange={(e) => setText(e.target.value)} // Dari Hook
-            // 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100, placeholder-gray-400 -> dark:placeholder-gray-500
+            users={users}
             className="flex-1 bg-transparent border-none outline-none text-sm py-1.5 px-1 min-w-0 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none overflow-hidden custom-scrollbar max-h-32 transition-colors duration-300"
             rows={1}
-            onInput={(e) => {
-              e.target.style.height = "auto";
-              e.target.style.height = `${e.target.scrollHeight}px`;
-            }}
           />
 
           {/* Tombol Kirim */}
