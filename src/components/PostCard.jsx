@@ -20,60 +20,72 @@ const PostCard = ({
   handleLikeComment,
   handleDeleteComment,
   refreshFeed,
-  users
+  users,
 }) => {
   // api diprop tapi juga diimport, kita pake prop aja biar konsisten
   const isMyPost = todo.userId?._id === currentUser?._id;
 
-
   // Fungsi render mention
+  // Fungsi render mention - PERBAIKAN TOTAL
   const renderTextWithMentions = (text, users) => {
-    if (!text) return null;
+    // Kalau text kosong, return array kosong (bukan null!)
+    if (!text || text === "") {
+      return [];
+    }
 
-    // Buat array username yang di-sort dari yang terpanjang (biar yang "kevin dev" tidak ke-match "kevin" dulu)
+    // Kalau users tidak valid, return text biasa dalam array
+    if (!users || !Array.isArray(users) || users.length === 0) {
+      return [{ type: "text", content: text }];
+    }
+
+    // Buat array username
     const sortedUsernames = [...users]
-      .map(u => u.username)
+      .filter((u) => u && u.username) // filter yang valid
+      .map((u) => u.username)
       .sort((a, b) => b.length - a.length);
 
-    // Escape regex special characters dan buat pattern
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Kalau ga ada username sama sekali
+    if (sortedUsernames.length === 0) {
+      return [{ type: "text", content: text }];
+    }
+
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const mentionPattern = new RegExp(
-      `@(${sortedUsernames.map(escapeRegex).join('|')})(?=\\s|$)`,
-      'g'
+      `@(${sortedUsernames.map(escapeRegex).join("|")})(?=\\s|$)`,
+      "g"
     );
 
     const parts = [];
     let lastIndex = 0;
     let match;
 
-    // Reset regex lastIndex
-    mentionPattern.lastIndex = 0;
-
     while ((match = mentionPattern.exec(text)) !== null) {
-      // Teks sebelum mention
       if (match.index > lastIndex) {
         parts.push({
-          type: 'text',
-          content: text.slice(lastIndex, match.index)
+          type: "text",
+          content: text.slice(lastIndex, match.index),
         });
       }
 
-      // Mention yang ditemukan
       parts.push({
-        type: 'mention',
-        content: match[0], // full "@kevin dev"
-        username: match[1]  // "kevin dev"
+        type: "mention",
+        content: match[0],
+        username: match[1],
       });
 
       lastIndex = match.index + match[0].length;
     }
 
-    // Sisa teks
     if (lastIndex < text.length) {
       parts.push({
-        type: 'text',
-        content: text.slice(lastIndex)
+        type: "text",
+        content: text.slice(lastIndex),
       });
+    }
+
+    // Kalau parts kosong, return text biasa
+    if (parts.length === 0) {
+      return [{ type: "text", content: text }];
     }
 
     return parts;
@@ -179,7 +191,7 @@ const PostCard = ({
         {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
         <p className="text-base leading-relaxed text-gray-800 dark:text-gray-100 mb-3 whitespace-pre-wrap">
           {renderTextWithMentions(todo.task, users).map((part, index) => {
-            if (part.type === 'mention') {
+            if (part.type === "mention") {
               return (
                 <span
                   key={index}
@@ -305,10 +317,11 @@ const PostCard = ({
         <button
           onClick={() => handleLike(todo._id)}
           // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400
-          className={`flex items-center gap-2 transition-all active:scale-125 ${(todo.likes || []).includes(currentUser?._id)
-            ? "text-pink-500"
-            : "text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400"
-            }`}
+          className={`flex items-center gap-2 transition-all active:scale-125 ${
+            (todo.likes || []).includes(currentUser?._id)
+              ? "text-pink-500"
+              : "text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400"
+          }`}
         >
           <span className="text-xl">
             {(todo.likes || []).includes(currentUser?._id) ? "❤️" : "🤍"}
@@ -323,10 +336,11 @@ const PostCard = ({
             setActiveCommentBox(activeCommentBox === todo._id ? null : todo._id)
           }
           // 🌓 FIX DARK MODE: hover:bg-gray-100 -> dark:hover:bg-slate-800, text-gray-500 -> dark:text-gray-400, active bg-blue-50 -> dark:bg-blue-950, text-blue-600 -> dark:text-blue-400
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-sm font-semibold ${activeCommentBox === todo._id
-            ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950"
-            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
-            }`}
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-sm font-semibold ${
+            activeCommentBox === todo._id
+              ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+          }`}
         >
           <span className="text-xl">💬</span>
           <span>{comments[todo._id]?.length || 0} Komentar</span>
@@ -394,19 +408,21 @@ const PostCard = ({
                   </div>
                   {/* 🌓 FIX DARK MODE: text-gray-800 -> dark:text-gray-100 */}
                   <p className="text-[13px] mt-0.5 text-gray-800 dark:text-gray-100 leading-snug whitespace-pre-wrap">
-                    {renderTextWithMentions(comment.content, users).map((part, index) => {
-                      if (part.type === 'mention') {
-                        return (
-                          <span
-                            key={index}
-                            className="text-blue-600 dark:text-blue-400 font-medium"
-                          >
-                            {part.content}
-                          </span>
-                        );
+                    {renderTextWithMentions(comment.content, users).map(
+                      (part, index) => {
+                        if (part.type === "mention") {
+                          return (
+                            <span
+                              key={index}
+                              className="text-blue-600 dark:text-blue-400 font-medium"
+                            >
+                              {part.content}
+                            </span>
+                          );
+                        }
+                        return <span key={index}>{part.content}</span>;
                       }
-                      return <span key={index}>{part.content}</span>;
-                    })}
+                    )}
                   </p>
                   {comment.image && (
                     <div className="mt-2 rounded-lg overflow-hidden max-w-50 border dark:border-slate-700">
@@ -422,10 +438,11 @@ const PostCard = ({
                   <button
                     onClick={() => handleLikeComment(comment._id, todo._id)}
                     // 🌓 FIX DARK MODE: text-gray-500 -> dark:text-gray-400, hover text-blue-600 -> dark:text-blue-400, text-pink-500
-                    className={`text-[11px] font-bold transition-colors ${comment.likes?.includes(currentUser?._id)
-                      ? "text-pink-500"
-                      : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                      }`}
+                    className={`text-[11px] font-bold transition-colors ${
+                      comment.likes?.includes(currentUser?._id)
+                        ? "text-pink-500"
+                        : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                    }`}
                   >
                     Suka
                   </button>

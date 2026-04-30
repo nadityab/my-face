@@ -1,0 +1,37 @@
+[33m13b6150[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m feat(chat): implement dynamic last seen status and dark mode for chat components
+[33mc7362d2[m style: apply dark mode styling to ChatWindow component
+[33m6993631[m style: apply dark mode styling to CommentInputBox component
+[33m1ca1205[m style: apply dark mode styling to CreatePostBox and PostCard components
+[33m1acd951[m refactor: implement Clean Architecture with MainLayout and Sidebar
+[33mff0ed72[m Dark Mode Test V2
+[33mcac2d37[m Dark Mode Test
+[33mbe55d1d[m ui: auto scroll chat window jika send message
+[33m5cf681f[m feat: implement session guarding with 5s polling and auto-logout alert
+[33m3fc0133[m SUPER :feat: implement full real-time chat system with DB persistence and unread notifications
+[33m6e9a07f[m menambahkan fitur chat socket.io
+[33md45c059[m fix(ui): synchronize refreshFeed props and refactor post input using useRef
+[33m0114171[m fix(post): align formData field name with backend multer array name 'images'
+[33m4c31dfe[m feat(feed): add auto-refresh polling every 1 minute to keep feed updated
+[33m105588a[m feat(ui): implement infinite scroll with intersection observer and useFeed hook
+[33m04f7fa9[m refactor(ui): apply clean architecture for post and comment inputs to eliminate typing lag
+[33m3dc78b5[m feat(ui): optimize What's New drawer with show more toggle and add v1.11.0 release notes
+[33mc6e83f6[m refactor(ui): extract image upload logic into dedicated handlers and add 10MB validation
+[33m59e7b0a[m feat(ui): convert inputs to auto-resizing textareas and support multi-line text
+[33m4372b9f[m feat(ui): implement dynamic grid gallery layout and increase upload limit to 10
+[33m70d08e1[m feat(frontend): implement multi-image upload preview and AntD carousel feed with legacy fallback
+[33m6c99f8d[m fix(ui): redesign comment input to support inline proportional image preview and AntD zoom
+[33mdbdd3c2[m ui: enhance image interaction with antd and optimize media display in feed
+[33m9a23cd5[m feat: implement image uploads for comments with loading states and anti-double post protection
+[33ma1fad82[m feat: implement deep linking, enhanced comment system v2.0 with images and likes
+[33m80f1e3b[m Update Fitur Share
+[33m7505985[m Fixed bugs
+[33m3752186[m Added likes and share
+[33m3fb0142[m Better token renewal
+[33me4d4120[m Added Comments features
+[33md9df9a0[m Handle upload
+[33m38b7e5e[m Refresh token
+[33ma030db4[m Better Responsivity
+[33m7befd5a[m additional updates and bugfixes
+[33mca199c3[m routing ke myface.fun
+[33m540aef8[m routing ke vps
+[33m7607e2d[m first commit
