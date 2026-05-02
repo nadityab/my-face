@@ -64,7 +64,7 @@ const MainLayout = ({ children }) => {
 
               {/* AKTIFKAN BADGE NOTIFIKASI */}
               {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] md:text-xs font-bold rounded-full min-w-[18px] h-[18px] md:min-w-[20px] md:h-[20px] flex items-center justify-center px-1 shadow-md">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] md:text-xs font-bold rounded-full min-w-4.5 h-4.5 md:min-w-5 md:h-5 flex items-center justify-center px-1 shadow-md">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
