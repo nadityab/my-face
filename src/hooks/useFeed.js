@@ -16,7 +16,7 @@ const useFeed = (api) => {
 
     setIsLoadingNotif(true);
     try {
-      const res = await api.get(`/notif?page=1&limit=20`);
+      const res = await api.get(`/notifications?page=1&limit=20`);
       setNotifications(res.data.notifications);
       setTotalUnread(res.data.totalUnread);
     } catch (err) {
@@ -29,13 +29,15 @@ const useFeed = (api) => {
   // Tandai notifikasi sebagai dibaca
   const markNotifAsRead = async (notificationId) => {
     try {
-      await api.put(`/notif/${notificationId}/read`);
-      setNotifications(prev =>
-        prev.map(notif =>
-          notif._id === notificationId ? { ...notif, isRead: true } : notif
+      await api.put(`/notifications/${notificationId}/read`);
+      setNotifications((prev) =>
+        prev.map((notifications) =>
+          notifications._id === notificationId
+            ? { ...notifications, isRead: true }
+            : notifications
         )
       );
-      setTotalUnread(prev => Math.max(0, prev - 1));
+      setTotalUnread((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error("Gagal tandai dibaca:", err);
     }
@@ -44,9 +46,9 @@ const useFeed = (api) => {
   // Tandai semua notifikasi sebagai dibaca
   const markAllNotifAsRead = async () => {
     try {
-      await api.put("/notif/read-all");
-      setNotifications(prev =>
-        prev.map(notif => ({ ...notif, isRead: true }))
+      await api.put("/notifications/read-all");
+      setNotifications((prev) =>
+        prev.map((notifications) => ({ ...notifications, isRead: true }))
       );
       setTotalUnread(0);
     } catch (err) {
