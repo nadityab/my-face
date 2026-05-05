@@ -16,12 +16,54 @@ const MainLayout = ({ children }) => {
 
   const { totalUnread, notifications, markNotifAsRead } = useFeedContext();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+  // +++ State untuk checkbox "Jangan tampilkan lagi"
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   // ==========================================
   // FITUR PUSH NOTIFICATION & PWA
   // ==========================================
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    // Fungsi pengecekan saat pertama kali aplikasi dibuka
+    const checkNotificationStatus = () => {
+      const isHidden = localStorage.getItem("hideNotifBanner");
+
+      // HANYA muncul jika:
+      // - Browser dukung Notifikasi
+      // - Izin masih 'default' (belum pernah milih Allow/Block di browser)
+      // - User belum pernah centang "Jangan Tampilkan Lagi"
+      if (
+        "Notification" in window &&
+        Notification.permission === "default" &&
+        isHidden !== "true" // Cek string "true"
+      ) {
+        setShowNotifBanner(true);
+      }
+    };
+
+    checkNotificationStatus();
+  }, []);
+
+  useEffect(() => {
+    const checkBanner = () => {
+      // Ambil data dari localStorage (hasilnya adalah string "true" atau null)
+      const isHidden = localStorage.getItem("hideNotifBanner");
+
+      // Logika: Munculkan jika browser dukung, izin masih default, DAN belum pernah diceklis "jangan tampilkan"
+      if (
+        "Notification" in window &&
+        Notification.permission === "default" &&
+        isHidden !== "true" // Membandingkan string "true"
+      ) {
+        setShowNotifBanner(true);
+      }
+    };
+
+    checkBanner();
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -45,12 +87,22 @@ const MainLayout = ({ children }) => {
   }, []);
 
   const handleInstallClick = async () => {
+    // 1. Cek apakah event 'beforeinstallprompt' sudah ditangkap dan disimpan di state
     if (deferredPrompt) {
+      // 2. Di sinilah kita "membayar hutang" ke browser dengan memanggil .prompt()
       deferredPrompt.prompt();
+
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") setShowInstallBanner(false);
+
+      if (outcome === "accepted") {
+        console.log("User menginstal MyFace! 🚀");
+        setShowInstallBanner(false);
+      }
+
+      // 3. Reset state karena event ini hanya bisa dipakai sekali
       setDeferredPrompt(null);
     } else {
+      // Untuk iOS yang tidak mendukung beforeinstallprompt
       alert(
         "Di iPhone: Klik ikon 'Share' lalu pilih 'Add to Home Screen' ya Bre! 🔥"
       );
@@ -73,13 +125,26 @@ const MainLayout = ({ children }) => {
 
   // 2. Fungsi Utama Langganan Push (FIXED)
   const enablePushNotifications = async () => {
+    if (Notification.permission === "denied") {
+      alert(
+        "Izin diblokir, Bre! 🔥\n\nKamu harus klik ikon gembok (🔒) atau apapun itu di sebelah alamat URL (bagian atas website), lalu ubah izin Notifikasi jadi 'Allow' secara manual."
+      );
+      setShowNotifBanner(false); // +++ TAMBAHAN: Tutup banner karena sudah tidak bisa diproses lewat tombol
+      return;
+    }
+
     if ("serviceWorker" in navigator && "PushManager" in window) {
       try {
         const register = await navigator.serviceWorker.register("/sw.js");
+
+        // 2. Jika statusnya 'default', baru pop-up browser akan muncul
         const permission = await Notification.requestPermission();
 
         if (permission !== "granted") {
-          alert("Izin notifikasi ditolak. Aktifkan di setelan browser.");
+          alert(
+            "Yah, kamu menolak akses notifikasi. Selanjutnya harus lewat setelan browser ya kalau mau aktifin!"
+          );
+          setShowNotifBanner(false); // +++ TAMBAHAN: Tutup banner karena user sudah membuat keputusan (menolak)
           return;
         }
 
@@ -102,6 +167,7 @@ const MainLayout = ({ children }) => {
         });
 
         alert("Berhasil! Notifikasi background aktif. ✅");
+        setShowNotifBanner(false);
       } catch (error) {
         console.error("Gagal mendaftar push:", error);
         alert("Gagal mengaktifkan notifikasi.");
@@ -271,16 +337,89 @@ const MainLayout = ({ children }) => {
         />
       )}
 
-      {showInstallBanner && (
-        <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 bg-slate-900 border border-slate-700 text-white p-4 rounded-xl shadow-2xl z-9999 animate-bounce-subtle">
+      {/* OVERLAY & BANNER PERSISTENT NOTIFIKASI */}
+      {showNotifBanner && (
+        <>
+          {/* LAPISAN OVERLAY */}
+          <div
+            className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-9998 transition-opacity animate-in fade-in duration-300"
+            onClick={() => setShowNotifBanner(false)}
+          />
+
+          {/* BANNER */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-105 bg-white dark:bg-slate-800 border-l-4 border-blue-500 shadow-2xl p-6 rounded-xl z-9999 animate-in zoom-in-95 duration-300">
+            <div className="flex flex-col gap-4">
+              {/* Bagian Atas: Ikon & Teks */}
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full text-3xl shrink-0">
+                  🔔
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    Aktifkan Notifikasi?
+                  </h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    Jangan lewatkan komentar, mention, dan update penting
+                    lainnya di <strong>MyFace</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* +++ BAGIAN BARU: Checkbox "Jangan tampilkan lagi" */}
+              <div className="flex items-center gap-2 px-1">
+                <input
+                  type="checkbox"
+                  id="dontShow"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                <label
+                  htmlFor="dontShow"
+                  className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none"
+                >
+                  Jangan tampilkan lagi jika saya memilih "Nanti"
+                </label>
+              </div>
+
+              {/* Bagian Bawah: Tombol Aksi */}
+              <div className="flex items-center justify-end gap-3 mt-2">
+                <button
+                  onClick={() => {
+                    // +++ Simpan pilihan ke localStorage jika dicentang
+                    if (dontShowAgain) {
+                      localStorage.setItem("hideNotifBanner", "true");
+                    }
+                    setShowNotifBanner(false);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  Nanti Saja
+                </button>
+                <button
+                  onClick={enablePushNotifications}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+                >
+                  Ya, Aktifkan!
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* BANNER INSTALASI PWA */}
+      {/* ✅ PERBAIKAN: Tambahkan !showNotifBanner agar tidak bentrok */}
+      {showInstallBanner && !showNotifBanner && (
+        <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 bg-slate-900 border border-slate-700 text-white p-4 rounded-xl shadow-2xl z-9990 animate-bounce-subtle">
           <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between">
               <div className="flex gap-3">
                 <div className="bg-blue-600 p-2 rounded-lg">🚀</div>
                 <div>
-                  <h4 className="font-bold text-sm">Instal MyFace App</h4>
+                  <h4 className="font-bold text-sm">Install MyFace App</h4>
                   <p className="text-xs text-slate-400">
-                    Dapatkan notifikasi real-time & akses lebih cepat!
+                    Dapatkan notifikasi secara real-time & akses lebih cepat!
                   </p>
                 </div>
               </div>

@@ -16,7 +16,6 @@ const CreatePostBox = ({ api, refreshFeed, users }) => {
     textAreaRef, // ✅ Gunakan ref dari hook
   } = useCreatePost(api, refreshFeed);
 
-
   const handleSubmit = (e) => {
     e.preventDefault();
     submitPost();
@@ -31,17 +30,21 @@ const CreatePostBox = ({ api, refreshFeed, users }) => {
       >
         {/* --- INPUT AREA --- */}
         <div className="flex gap-2 items-center w-full min-w-0">
-          <div className="grow shrink min-w-0 basis-0">
+          {/* Gunakan basis-auto dan pastikan tidak dipaksa ke nol */}
+          <div className="grow min-w-0 flex-1">
             <MentionTextarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Apa yang kamu pikirkan?"
               users={users}
-              className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 text-sm resize-none overflow-hidden custom-scrollbar"
+              /* 
+              1. px-3: Mengurangi sedikit padding horizontal agar teks punya ruang lebih.
+              2. leading-tight: Memastikan tinggi baris tidak membuat teks terpotong secara vertikal.
+              3. flex-1: Memastikan elemen mengisi ruang yang tersedia secara proporsional.
+              */
+              className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 text-sm resize-none overflow-hidden custom-scrollbar leading-tight"
               rows={1}
             />
-
-
           </div>
 
           {/* --- ACTIONS --- */}
@@ -84,10 +87,11 @@ const CreatePostBox = ({ api, refreshFeed, users }) => {
               type="submit"
               disabled={isLoading || (!text.trim() && images.length === 0)}
               // 🌓 FIX DARK MODE: bg-blue-300 -> dark:bg-blue-800, disabled logic...
-              className={`shrink-0 text-white px-5 sm:px-7 py-2 rounded-full font-bold transition-all shadow-sm text-xs sm:text-sm whitespace-nowrap ${isLoading || (!text.trim() && images.length === 0)
-                ? "bg-blue-300 dark:bg-blue-800 text-blue-100 cursor-not-allowed opacity-70"
-                : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-blue-200 dark:shadow-none"
-                }`}
+              className={`shrink-0 text-white px-5 sm:px-7 py-2 rounded-full font-bold transition-all shadow-sm text-xs sm:text-sm whitespace-nowrap ${
+                isLoading || (!text.trim() && images.length === 0)
+                  ? "bg-blue-300 dark:bg-blue-800 text-blue-100 cursor-not-allowed opacity-70"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-blue-200 dark:shadow-none"
+              }`}
             >
               {isLoading ? "Memposting..." : "Post"}
             </button>
@@ -146,7 +150,6 @@ const CreatePostBox = ({ api, refreshFeed, users }) => {
           </div>
         )}
       </form>
-
     </>
   );
 };
