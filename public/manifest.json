@@ -1,0 +1,15 @@
+{
+  "short_name": "MyFace",
+  "name": "MyFace is Fun",
+  "icons": [
+    {
+      "src": "logor.png",
+      "type": "image/png",
+      "sizes": "600x600"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff"
+}
