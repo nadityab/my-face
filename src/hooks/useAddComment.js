@@ -1,3 +1,4 @@
+//this is useAddComment.js
 import { useState } from "react";
 
 // 🧠 SANG OTAK (Custom Hook: Berisi State & Logika API)
