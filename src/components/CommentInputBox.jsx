@@ -11,7 +11,7 @@ const CommentInputBox = ({
   setComments,
   fetchAllTodos,
   currentUser,
-  users = []
+  users = [],
 }) => {
   // Panggil Sang Otak
   const {
@@ -117,10 +117,11 @@ const CommentInputBox = ({
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 // 🌓 FIX DARK MODE: text-blue-600 -> dark:text-blue-400, text-gray-400 -> dark:text-gray-600
-                className={`h-5 w-5 transition-colors duration-300 ${text.trim() || image
+                className={`h-5 w-5 transition-colors duration-300 ${
+                  text.trim() || image
                     ? "text-blue-600 dark:text-blue-400"
                     : "text-gray-400 dark:text-gray-600"
-                  }`}
+                }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >

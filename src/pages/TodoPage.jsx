@@ -302,8 +302,9 @@ function TodoPage() {
     const shareUrl = `${window.location.origin}/post/${todo._id}`;
     const shareData = {
       title: "MyFace is Fun",
-      text: `Lihat postingan dari ${todo.userId?.username || "User"}: "${todo.task
-        }"`,
+      text: `Lihat postingan dari ${todo.userId?.username || "User"}: "${
+        todo.task
+      }"`,
       url: shareUrl,
     };
 
@@ -366,51 +367,55 @@ function TodoPage() {
     fetchUsers();
   }, []);
 
+  const location = useLocation();
+  const postRefs = useRef({});
+  const isScrollingRef = useRef(false); // ✅ flag sementara, bukan ID
 
+  const setPostRef = (postId, element) => {
+    if (element) {
+      postRefs.current[postId] = element;
+    }
+  };
 
-const location = useLocation();
-const postRefs = useRef({});
-const isScrollingRef = useRef(false); // ✅ flag sementara, bukan ID
+  useEffect(() => {
+    const scrollToPostId = location.state?.scrollToPost;
 
-const setPostRef = (postId, element) => {
-  if (element) {
-    postRefs.current[postId] = element;
-  }
-};
+    if (!scrollToPostId) return;
 
-useEffect(() => {
-  const scrollToPostId = location.state?.scrollToPost;
+    // ✅ Cegah scroll ganda dalam waktu bersamaan
+    if (isScrollingRef.current) {
+      console.log("Sedang scrolling, skip");
+      return;
+    }
 
-  if (!scrollToPostId) return;
+    if (postRefs.current[scrollToPostId]) {
+      isScrollingRef.current = true;
 
-  // ✅ Cegah scroll ganda dalam waktu bersamaan
-  if (isScrollingRef.current) {
-    console.log("Sedang scrolling, skip");
-    return;
-  }
+      postRefs.current[scrollToPostId].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
 
-  if (postRefs.current[scrollToPostId]) {
-    isScrollingRef.current = true;
+      const element = postRefs.current[scrollToPostId];
+      element.classList.add(
+        "ring-2",
+        "ring-blue-500",
+        "bg-blue-50/50",
+        "transition-all",
+        "duration-300"
+      );
 
-    postRefs.current[scrollToPostId].scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+      setTimeout(() => {
+        element.classList.remove("ring-2", "ring-blue-500", "bg-blue-50/50");
 
-    const element = postRefs.current[scrollToPostId];
-    element.classList.add("ring-2", "ring-blue-500", "bg-blue-50/50", "transition-all", "duration-300");
+        // ✅ Reset flag setelah selesai
+        isScrollingRef.current = false;
 
-    setTimeout(() => {
-      element.classList.remove("ring-2", "ring-blue-500", "bg-blue-50/50");
-      
-      // ✅ Reset flag setelah selesai
-      isScrollingRef.current = false;
-      
-      // Hapus state
-      window.history.replaceState({}, document.title);
-    }, 1000);
-  }
-}, [location.state]);
+        // Hapus state
+        window.history.replaceState({}, document.title);
+      }, 1000);
+    }
+  }, [location.state]);
 
   return (
     <>
@@ -514,10 +519,11 @@ useEffect(() => {
             </div>
             <div className="p-6 flex flex-col gap-4">
               <MentionTextarea
+                id="comment-input"
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 placeholder="Edit postinganmu..."
-                users={users}  // ← kirim users dari props
+                users={users} // ← kirim users dari props
                 className="w-full bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white border dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 h-28 transition-colors"
                 rows={3}
                 autoFocus={true}
@@ -538,10 +544,11 @@ useEffect(() => {
               <button
                 onClick={() => handleUpdateText(selectedTodo._id)}
                 disabled={isLoading}
-                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${isLoading
-                  ? "bg-blue-400 cursor-not-allowed opacity-70"
-                  : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-                  }`}
+                className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed opacity-70"
+                    : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                }`}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">

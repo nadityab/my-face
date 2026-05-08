@@ -446,6 +446,18 @@ const PostCard = ({
                   >
                     Suka
                   </button>
+                  {/* TITIK PEMISAH */}
+                  <span className="text-[10px] text-gray-300 dark:text-gray-600">
+                    •
+                  </span>
+
+                  {/* BUTTON BALAS (New) */}
+                  <button
+                    onClick={() => handleReply(comment.userId.username)}
+                    className="text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  >
+                    Balas
+                  </button>
                   {comment.likes?.length > 0 && (
                     // 🌓 FIX DARK MODE: text-gray-400 -> dark:text-gray-500
                     <span className="text-[11px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
