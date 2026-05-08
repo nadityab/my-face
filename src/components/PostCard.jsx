@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react"; // Tambah useRef
 import { Image } from "antd";
 import CommentInputBox from "./CommentInputBox"; // Sesuaikan path jika beda
 import api, { API_URL } from "../api";
@@ -22,6 +22,17 @@ const PostCard = ({
   refreshFeed,
   users,
 }) => {
+  // +++ Buat referensi untuk mengakses fungsi di dalam CommentInputBox
+  const commentInputRef = useRef(null);
+  // 2. Fungsi Balas yang akan dipanggil tombol
+  const handleReply = (username) => {
+    console.log("Tombol Balas dipencet buat:", username); // Debugging
+    if (commentInputRef.current) {
+      commentInputRef.current.addReply(username);
+    } else {
+      console.error("Ref ke CommentInputBox belum nempel, Bre!");
+    }
+  };
   // api diprop tapi juga diimport, kita pake prop aja biar konsisten
   const isMyPost = todo.userId?._id === currentUser?._id;
 
@@ -481,6 +492,8 @@ const PostCard = ({
 
         {/* INPUT BAR KOMENTAR */}
         <CommentInputBox
+          ref={commentInputRef}
+          innerRef={commentInputRef} // +++ Berikan ref agar PostCard bisa "menyuntikkan" teks
           todoId={todo._id}
           api={api}
           setComments={setComments}
