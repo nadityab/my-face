@@ -14,6 +14,22 @@ const MainLayout = ({ children }) => {
     window.location.href = "/login";
   };
 
+  const handleMarkAllRead = async () => {
+    try {
+      await api.put("/notifications/mark-all-read");
+
+      // Update state lokal agar angka notifikasi langsung hilang (Optimistic UI)
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, isRead: true }))
+      );
+
+      // Jika kamu punya state khusus untuk count:
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Gagal memperbarui notifikasi", error);
+    }
+  };
+
   const { totalUnread, notifications, markNotifAsRead } = useFeedContext();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
