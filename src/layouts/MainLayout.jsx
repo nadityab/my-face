@@ -3,7 +3,7 @@ import Sidebar from "../components/layout/Sidebar";
 import { FaBars } from "react-icons/fa";
 import { useFeedContext } from "../context/FeedContext";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../api";
+import api, { API_URL } from "../api";
 
 const MainLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -16,24 +16,23 @@ const MainLayout = ({ children }) => {
 
   const handleMarkAllRead = async () => {
     try {
-      await api.put("/notifications/mark-all-read");
+      // Panggil fungsi yang sudah kita buat di useFeed.js
+      // Fungsi ini otomatis nembak API + ngosongin angka notif di UI
+      await markAllNotifAsRead();
 
-      // Update state lokal agar angka notifikasi langsung hilang (Optimistic UI)
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, isRead: true }))
-      );
-
-      // Jika kamu punya state khusus untuk count:
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("Gagal memperbarui notifikasi", error);
+      console.log("Semua notifikasi berhasil ditandai terbaca!");
+    } catch (err) {
+      // Error ini biasanya muncul kalau API /notifications/read-all belum sinkron
+      console.error("Gagal update notifikasi:", err);
     }
   };
 
-  const { totalUnread, notifications, markNotifAsRead } = useFeedContext();
+  const { totalUnread, notifications, markNotifAsRead, markAllNotifAsRead } =
+    useFeedContext();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   // +++ State untuk checkbox "Jangan tampilkan lagi"
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -271,15 +270,39 @@ const MainLayout = ({ children }) => {
         {isNotifOpen && (
           <div className="fixed right-4 top-14 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl z-50 border border-gray-200 dark:border-slate-700">
             <div className="p-3 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
-              <h3 className="font-bold text-gray-900 dark:text-white">
-                Notifikasi
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-900 dark:text-white">
+                  Notifikasi
+                </h3>
+                {/* Badge Angka - Pro Tip: Hanya muncul jika > 0 */}
+                {totalUnread > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">
+                    {totalUnread}
+                  </span>
+                )}
+              </div>
+
               <button
                 onClick={() => setIsNotifOpen(false)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
               >
                 ✕
               </button>
+            </div>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10 transition-colors duration-300">
+              {/* TOMBOL MARK ALL AS READ - Pro Tip: Conditional Rendering */}
+              {notifications.some((n) => !n.isRead) ? (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
+                >
+                  Tandai semua terbaca
+                </button>
+              ) : (
+                <span className="text-[11px] font-medium text-gray-400 dark:text-gray-600 italic">
+                  Semua sudah terbaca
+                </span>
+              )}
             </div>
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (

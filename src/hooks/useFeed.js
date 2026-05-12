@@ -173,6 +173,7 @@ const useFeed = (api) => {
     isLoadingNotif,
     markNotifAsRead,
     markAllNotifAsRead,
+    fetchNotifications,
   };
 };
 
